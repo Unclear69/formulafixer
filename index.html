@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FormulaFixer — Explain or Fix Any Excel or Google Sheets Formula, Free</title>
+<meta name="description" content="Paste any spreadsheet formula and get an instant plain-English explanation. Fix broken formulas or generate new ones from a description. No signup required.">
+<link rel="canonical" href="https://formulafixer.org/">
+<link rel="icon" href="/favicon.png" type="image/png">
+
+<meta property="og:title" content="FormulaFixer — fix, explain, or generate any formula">
+<meta property="og:description" content="Paste a formula. No account needed. Get a plain-English explanation, a fix, or a brand new formula in seconds.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://formulafixer.org/">
+<meta property="og:image" content="https://formulafixer.org/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "FormulaFixer",
+  "applicationCategory": "Utility",
+  "operatingSystem": "Web",
+  "description": "Paste any spreadsheet formula and get an instant plain-English explanation. Fix broken formulas or generate new ones from a description.",
+  "offers": [
+    { "@type": "Offer", "price": "0", "priceCurrency": "USD", "name": "Free" },
+    { "@type": "Offer", "price": "2.99", "priceCurrency": "USD", "name": "Paid" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Does this work for Google Sheets and Excel?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. The formula syntax for both is nearly identical, and results work for either." } },
+    { "@type": "Question", "name": "Is my data stored?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. Formulas are sent for processing and not saved afterward." } },
+    { "@type": "Question", "name": "What happens after the free limit?",
+      "acceptedAnswer": { "@type": "Answer", "text": "You can keep using single-formula requests for free. Bulk review needs the paid plan." } },
+    { "@type": "Question", "name": "How accurate is it?",
+      "acceptedAnswer": { "@type": "Answer", "text": "It's reliable for standard Excel and Google Sheets syntax. Always check results before using them in critical work." } }
+  ]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --bg-tint:#F4F7F5;
+    --ink:#16191A;
+    --ink-soft:#63706A;
+    --ink-faint:#95A099;
+    --accent:#1E7A54;
+    --accent-dark:#155E40;
+    --accent-soft:#E7F3EC;
+    --line:#E3E8E4;
+    --line-strong:#CBD5CE;
+    --header-bg:#028355;
+    --header-text:#FFFFFF;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; scroll-behavior:smooth; }
+  body{
+    font-family:var(--sans);
+    color:var(--ink);
+    background:var(--bg);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; }
+  .wrap{ max-width:760px; margin:0 auto; padding:0 24px; }
+
+  header.site{
+    background:var(--header-bg); color:var(--header-text);
+    position:sticky; top:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 24px; max-width:100%;
+  }
+  .logo{ display:flex; align-items:center; justify-content:center; background:#fff; border-radius:24px; padding:6px 10px; text-decoration:none; }
+  .logo img{ width:20px; height:20px; }
+  nav.site-links{ display:flex; gap:16px; font-size:13px; color:rgba(255,255,255,0.85); flex-wrap:wrap; align-items:center; }
+  nav.site-links a{ text-decoration:none; }
+  nav.site-links a:hover{ color:#fff; }
+
+  .btn-google{
+    background:#fff; color:#16191A; border:none; border-radius:8px; padding:7px 14px;
+    font-size:13px; font-weight:500; cursor:pointer; font-family:var(--sans);
+    display:flex; align-items:center; gap:7px;
+  }
+  .btn-google:hover{ background:#f0f0f0; }
+  .btn-signout{
+    background:transparent; color:rgba(255,255,255,0.85); border:1px solid rgba(255,255,255,0.3);
+    border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer; font-family:var(--sans);
+  }
+  .btn-signout:hover{ color:#fff; border-color:rgba(255,255,255,0.6); }
+  .user-info{ display:flex; align-items:center; gap:8px; color:#fff; font-size:13px; }
+  .user-info img{ width:22px; height:22px; border-radius:50%; }
+
+  .hero{ padding:36px 0 8px; text-align:center; }
+  h1.headline{ font-size:34px; font-weight:600; letter-spacing:-0.02em; line-height:1.2; margin:0 0 10px; }
+  p.subhead{ font-size:16px; color:var(--ink-soft); margin:0 0 32px; }
+
+  .tool{ border:1px solid var(--line); border-radius:14px; background:var(--bg); padding:6px; text-align:left; }
+  .tabs{ display:flex; gap:4px; padding:6px 6px 10px; overflow-x:auto; }
+  .tab{
+    flex:1; text-align:center; font-size:13px; font-weight:500; color:var(--ink-soft);
+    padding:9px 8px; border-radius:8px; cursor:pointer; user-select:none;
+    border:1px solid transparent; white-space:nowrap;
+  }
+  .tab.active{ background:var(--accent-soft); color:var(--accent-dark); border-color:var(--accent-soft); }
+  .tab:hover:not(.active){ background:var(--bg-tint); }
+  .tab .badge{ display:inline-block; font-size:10px; font-weight:500; background:rgba(30,122,84,0.12); color:var(--accent); padding:2px 6px; border-radius:6px; margin-left:5px; vertical-align:middle; }
+  .tab.locked{ cursor:default; }
+
+  .input-area{ position:relative; padding:0 6px 6px; }
+  textarea#formula-input{
+    width:100%; min-height:96px; resize:vertical;
+    border:1px solid var(--line); border-radius:10px;
+    padding:14px 16px; font-family:var(--mono); font-size:14.5px; color:var(--ink);
+    background:var(--bg-tint); outline:none;
+  }
+  textarea#formula-input:focus{ border-color:var(--accent); background:var(--bg); }
+  textarea#formula-input::placeholder{ color:var(--ink-faint); font-family:var(--sans); font-size:14px; }
+  textarea#formula-input.bulk-mode{ min-height:160px; }
+
+  .cell-handle{ position:absolute; width:7px; height:7px; background:var(--accent); right:16px; bottom:16px; pointer-events:none; }
+
+  .bulk-tools{ display:none; padding:0 6px 8px; }
+  .bulk-tools.active{ display:flex; align-items:center; gap:10px; }
+  .bulk-tools .upload-btn{
+    font-family:var(--sans); font-size:13px; color:var(--ink-soft);
+    border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer; background:var(--bg);
+  }
+  .bulk-tools .upload-btn:hover{ border-color:var(--line-strong); color:var(--ink); }
+  .bulk-tools .file-name{ font-size:13px; color:var(--ink-faint); font-family:var(--mono); }
+  #bulk-file-input{ display:none; }
+
+  .paywall-prompt{ display:none; padding:14px 10px 6px; }
+  .paywall-prompt.active{ display:block; }
+  .paywall-inner{
+    border:1px solid var(--line); border-radius:10px; padding:14px 16px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    background:var(--bg-tint);
+  }
+  .paywall-inner p{ margin:0; font-size:14px; color:var(--ink-soft); }
+  .paywall-inner button{
+    background:var(--accent); color:#fff; border:none; border-radius:8px;
+    padding:8px 16px; font-size:13px; font-weight:500; cursor:pointer; font-family:var(--sans);
+  }
+  .paywall-inner button:hover{ background:var(--accent-dark); }
+
+  .run-row{ display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:10px 10px 6px; }
+  .kbd-hint{ font-family:var(--mono); font-size:11px; color:var(--ink-faint); }
+  button#run-btn{ background:var(--accent); color:#fff; border:none; border-radius:8px; padding:10px 20px; font-size:14px; font-weight:500; cursor:pointer; font-family:var(--sans); }
+  button#run-btn:hover{ background:var(--accent-dark); }
+  button#run-btn:disabled{ background:var(--ink-faint); cursor:default; }
+
+  .examples-label{ font-size:12px; color:var(--ink-faint); margin:20px 0 8px; text-align:center; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:0 0 6px; }
+  .chip{ font-family:var(--mono); font-size:12.5px; color:var(--ink-soft); border:1px solid var(--line); border-radius:20px; padding:6px 14px; cursor:pointer; background:var(--bg); }
+  .chip:hover{ border-color:var(--line-strong); color:var(--ink); }
+
+  #result-panel{ display:none; text-align:left; margin-top:18px; }
+  .result-card{ border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
+  .result-label{ font-size:12px; color:var(--ink-faint); margin:0 0 8px; text-transform:uppercase; letter-spacing:0.04em; }
+  .formula-box{ font-family:var(--mono); font-size:14px; background:var(--accent-soft); border-radius:8px; padding:12px 42px 12px 14px; margin:0 0 10px; position:relative; white-space:pre-wrap; word-break:break-word; color:var(--accent-dark); }
+  .copy-btn{ position:absolute; top:8px; right:8px; background:var(--bg); border:1px solid var(--line); border-radius:6px; font-size:11px; padding:4px 9px; cursor:pointer; color:var(--ink-soft); font-family:var(--sans); }
+  .copy-btn:hover{ color:var(--ink); }
+  p.explanation{ font-size:14.5px; color:var(--ink); margin:0; }
+  .inline-status{ font-family:var(--mono); font-size:14px; color:var(--ink-soft); }
+  .blink{ animation:blink 1s step-start infinite; }
+  @keyframes blink{ 50%{ opacity:0; } }
+  .error-line{ font-size:14px; color:var(--ink-soft); }
+
+  .bulk-table{ width:100%; border-collapse:collapse; font-size:13.5px; margin-top:12px; }
+  .bulk-table th{ text-align:left; font-family:var(--sans); font-weight:500; color:var(--ink-faint); font-size:12px; padding:8px 10px; border-bottom:1px solid var(--line); text-transform:uppercase; letter-spacing:0.04em; }
+  .bulk-table td{ padding:10px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .bulk-table td.cell{ font-family:var(--mono); font-size:13px; color:var(--ink-soft); white-space:nowrap; }
+  .bulk-table td.formula{ font-family:var(--mono); font-size:13px; color:var(--accent-dark); }
+  .bulk-table td.explanation{ font-family:var(--sans); color:var(--ink-soft); }
+  .bulk-table td.flag{ font-family:var(--sans); font-size:12.5px; color:var(--accent); font-weight:500; }
+  .bulk-table tr.flagged{ background:var(--accent-soft); }
+  .bulk-table tr.flagged td.flag{ color:var(--accent-dark); }
+  .bulk-download{ margin-top:14px; text-align:right; }
+  .bulk-download .dl-btn{ font-family:var(--sans); font-size:13px; border:1px solid var(--line); border-radius:8px; padding:8px 16px; cursor:pointer; background:var(--bg); color:var(--ink-soft); }
+  .bulk-download .dl-btn:hover{ border-color:var(--line-strong); color:var(--ink); }
+
+  .visually-hidden{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  .how{ padding:48px 0 40px; }
+  .how-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:24px; text-align:center; }
+  .how-item .mark{ width:8px; height:8px; background:var(--accent); border-radius:2px; margin:0 auto 12px; }
+  .how-item h3{ font-size:14px; font-weight:600; margin:0 0 4px; }
+  .how-item p{ font-size:13px; color:var(--ink-soft); margin:0; }
+
+  .section-heading{ font-size:22px; font-weight:600; margin:0 0 6px; }
+  .section-subtitle{ font-size:13px; color:var(--ink-faint); margin:0 0 24px; }
+  .basics{ padding:0 0 32px; }
+  .basics p{ font-size:14px; color:var(--ink-soft); margin:0 0 10px; }
+  .basics code{ font-family:var(--mono); font-size:13.5px; background:var(--accent-soft); color:var(--accent-dark); padding:2px 6px; border-radius:4px; }
+  .cta-btn{ display:inline-block; background:var(--accent); color:#fff; text-decoration:none; border-radius:50px; padding:12px 28px; font-size:14px; font-weight:500; margin-top:12px; }
+  .cta-btn:hover{ background:var(--accent-dark); }
+  .cta-wrap{ text-align:center; }
+
+  .pricing{ padding:0 0 48px; }
+  .pricing h2{ text-align:center; font-size:22px; font-weight:600; margin:0 0 28px; }
+  .price-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .price-card{ border:1px solid var(--line); border-radius:14px; padding:24px; }
+  .price-card.paid{ border-color:var(--accent); }
+  .price-card h3{ font-size:15px; font-weight:600; margin:0 0 4px; }
+  .price-card .amount{ font-size:26px; font-weight:600; margin:0 0 14px; }
+  .price-card .amount span{ font-size:13px; font-weight:400; color:var(--ink-soft); }
+  .price-card ul{ margin:0; padding:0; list-style:none; font-size:13.5px; color:var(--ink-soft); }
+  .price-card li{ padding:5px 0; }
+  .lifetime-note{ text-align:center; font-size:12.5px; color:var(--ink-faint); margin-top:14px; }
+
+  .teaser{ background:var(--bg-tint); border-radius:16px; padding:40px 36px; margin:0 0 48px; }
+  .teaser h2{ font-size:20px; font-weight:600; margin:0 0 8px; }
+  .teaser p{ font-size:14.5px; color:var(--ink-soft); margin:0 0 14px; max-width:560px; }
+  .teaser .features{ display:grid; grid-template-columns:1fr 1fr; gap:10px 24px; margin:0 0 18px; }
+  .teaser .features .feat{ font-size:13.5px; color:var(--ink-soft); padding-left:16px; position:relative; }
+  .teaser .features .feat::before{ content:''; position:absolute; left:0; top:7px; width:6px; height:6px; background:var(--accent); border-radius:2px; }
+
+  .formula-ref{ padding:0 0 48px; }
+  .ref-controls{ display:flex; gap:10px; margin:0 0 14px; flex-wrap:wrap; align-items:center; }
+  .ref-controls input, .ref-controls select{ font-family:var(--sans); font-size:13px; border:1px solid var(--line); border-radius:8px; padding:8px 12px; background:var(--bg); color:var(--ink); outline:none; }
+  .ref-controls input{ flex:1; min-width:160px; }
+  .ref-controls input:focus, .ref-controls select:focus{ border-color:var(--accent); }
+  .ref-controls select{ cursor:pointer; }
+  .ref-controls .sort-btn{ font-family:var(--sans); font-size:13px; border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; background:var(--bg); color:var(--ink-soft); user-select:none; display:flex; align-items:center; gap:6px; }
+  .ref-controls .sort-btn:hover{ border-color:var(--line-strong); color:var(--ink); }
+  .ref-pagination{ display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:14px; }
+  .ref-pagination .page-btn{ font-family:var(--sans); font-size:13px; border:1px solid var(--line); border-radius:8px; padding:8px 16px; cursor:pointer; background:var(--bg); color:var(--ink-soft); user-select:none; }
+  .ref-pagination .page-btn:hover:not(.disabled){ border-color:var(--line-strong); color:var(--ink); }
+  .ref-pagination .page-btn.disabled{ opacity:0.3; cursor:default; pointer-events:none; }
+  .ref-pagination .page-info{ font-size:13px; color:var(--ink-faint); }
+  .ref-list{ border:1px solid var(--line); border-radius:12px; overflow:visible; }
+  .ref-row{ display:flex; align-items:flex-start; gap:16px; padding:14px 18px; border-bottom:1px solid var(--line); position:relative; }
+  .ref-row:last-child{ border-bottom:none; }
+  .ref-row .ref-formula{ font-family:var(--mono); font-size:13.5px; background:var(--bg-tint); border-radius:8px; padding:8px 14px; white-space:nowrap; flex-shrink:0; color:var(--accent-dark); min-width:140px; text-align:center; }
+  .ref-row .ref-info{ flex:1; min-width:0; }
+  .ref-row .ref-explain{ font-size:13.5px; color:var(--ink-soft); position:relative; }
+  .ref-row .ref-explain .short-text{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ref-row .ref-meta{ display:flex; gap:12px; margin-top:4px; font-size:11.5px; color:var(--ink-faint); }
+  .ref-row .ref-category{ font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--accent); white-space:nowrap; }
+  .ref-tooltip{ display:none; position:fixed; z-index:200; max-width:420px; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:13px; color:var(--ink-soft); box-shadow:0 4px 24px rgba(0,0,0,0.1); pointer-events:none; white-space:normal; }
+  @media (hover:hover){ .ref-row .ref-explain.truncated:hover .ref-tooltip{ display:block; } }
+
+  .faq{ padding:0 0 64px; }
+  .faq h2{ text-align:center; font-size:22px; font-weight:600; margin:0 0 20px; }
+  details{ border-bottom:1px solid var(--line); padding:14px 0; }
+  summary{ font-size:14.5px; font-weight:500; cursor:pointer; list-style:none; }
+  summary::-webkit-details-marker{ display:none; }
+  details p{ font-size:13.5px; color:var(--ink-soft); margin:8px 0 0; }
+
+  footer{ border-top:1px solid var(--line); padding:20px 0 40px; text-align:center; font-size:13px; color:var(--ink-faint); }
+  footer a{ text-decoration:none; color:var(--ink-soft); margin:0 10px; }
+
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#14171A; --bg-tint:#1B1F1D; --ink:#EDEFEC; --ink-soft:#9AA59E; --ink-faint:#5E685F; --accent:#3FBE85; --accent-dark:#2E9E6C; --accent-soft:#1F3B2E; --line:#2A302C; --line-strong:#3A423C; }
+    .price-card.paid{ border-color:var(--accent); }
+    .formula-box{ color:#B7F0D2; }
+    .bulk-table tr.flagged{ background:#1F3B2E; }
+    .bulk-table td.flag{ color:#3FBE85; }
+    .bulk-table tr.flagged td.flag{ color:#B7F0D2; }
+    .ref-row .ref-formula{ color:#B7F0D2; }
+    .ref-tooltip{ box-shadow:0 4px 24px rgba(0,0,0,0.4); }
+    .cta-btn{ color:#fff; }
+    .btn-google{ background:#fff; color:#16191A; }
+    .btn-google:hover{ background:#e0e0e0; }
+  }
+  @media (max-width:600px){
+    h1.headline{ font-size:26px; }
+    .how-grid{ grid-template-columns:1fr; gap:28px; }
+    .price-grid{ grid-template-columns:1fr; }
+    .teaser{ padding:24px; }
+    .teaser .features{ grid-template-columns:1fr; }
+    .bulk-table{ font-size:12.5px; }
+    .bulk-table th, .bulk-table td{ padding:8px 6px; }
+    .ref-row{ flex-direction:column; gap:8px; }
+    .ref-row .ref-formula{ min-width:auto; }
+    .tabs{ gap:2px; }
+    .tab{ font-size:11.5px; padding:8px 6px; }
+    .tab .badge{ font-size:9px; padding:1px 5px; margin-left:3px; }
+    nav.site-links{ gap:10px; font-size:11.5px; }
+    .ref-tooltip{ max-width:280px; }
+    .paywall-inner{ flex-direction:column; align-items:flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Set these to your actual Supabase values. Both are safe to expose client-side. -->
+<script>
+  window.ENV = {
+    SUPABASE_URL: 'https://your-project-id.supabase.co',
+    SUPABASE_ANON_KEY: 'your-anon-key'
+  };
+</script>
+
+<header class="site">
+  <a href="/" class="logo"><img src="/logo.png" alt="FormulaFixer" width="20" height="20"></a>
+  <nav class="site-links">
+    <a href="#basics">Basics</a>
+    <a href="#reference">Reference</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+    <a href="/guide">Guide</a>
+    <span id="auth-area">
+      <button class="btn-google" id="btn-google-signin">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Sign in with Google
+      </button>
+    </span>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1 class="headline">Fix, explain, or generate any formula</h1>
+    <p class="subhead">Paste a formula. No account needed.</p>
+
+    <div class="tool">
+      <div class="tabs">
+        <div class="tab active" data-mode="explain">Explain</div>
+        <div class="tab" data-mode="generate">Generate</div>
+        <div class="tab" data-mode="fix">Fix</div>
+        <div class="tab" data-mode="bulk">Bulk<span class="badge">Paid</span></div>
+      </div>
+      <div class="input-area">
+        <textarea id="formula-input" placeholder="=VLOOKUP(A2,Sheet2!A:B,2,FALSE)"></textarea>
+        <div class="cell-handle"></div>
+      </div>
+      <div class="bulk-tools" id="bulk-tools">
+        <label class="upload-btn" for="bulk-file-input">Upload .csv or .xlsx</label>
+        <input type="file" id="bulk-file-input" accept=".csv,.xlsx">
+        <span class="file-name" id="file-name"></span>
+      </div>
+      <div class="paywall-prompt" id="paywall-prompt">
+        <div class="paywall-inner">
+          <p>Bulk analysis needs FormulaFixer Pro ($2.99/mo).</p>
+          <button id="paywall-btn">Sign in to subscribe</button>
+        </div>
+      </div>
+      <div class="run-row">
+        <span class="kbd-hint">⌘+Enter / Ctrl+Enter</span>
+        <button id="run-btn">Explain formula</button>
+      </div>
+    </div>
+
+    <div id="recent-list" class="chips" style="display:none; margin-top:10px;"></div>
+
+    <div class="examples-label">Examples</div>
+    <div class="chips" id="example-chips">
+      <div class="chip" data-mode="explain" data-text="=SUM(A1:A10)">=SUM(A1:A10)</div>
+      <div class="chip" data-mode="explain" data-text='=IF(C5>100,"Yes","No")'>IF with condition</div>
+      <div class="chip" data-mode="explain" data-text="=SUMPRODUCT((A1:A10=B1)*(C1:C10))">=SUMPRODUCT((A1:A10=B1)*(C1:C10))</div>
+      <div class="chip" data-mode="generate" data-text="lookup a value in a table and return the matching row from another column">lookup value, return matching row</div>
+    </div>
+
+    <div id="result-panel">
+      <div class="result-card" id="result-card"></div>
+    </div>
+  </section>
+
+  <section class="how">
+    <h2 class="visually-hidden">How it works</h2>
+    <div class="how-grid">
+      <div class="how-item"><div class="mark"></div><h3>Explain</h3><p>Paste a formula, get it in plain English.</p></div>
+      <div class="how-item"><div class="mark"></div><h3>Generate</h3><p>Describe what you want, get the formula.</p></div>
+      <div class="how-item"><div class="mark"></div><h3>Fix</h3><p>Paste a broken formula, get it corrected.</p></div>
+    </div>
+  </section>
+
+  <section class="basics" id="basics">
+    <h2 class="section-heading">Basics</h2>
+    <p class="section-subtitle">A quick introduction to how spreadsheets and formulas work.</p>
+    <p>A spreadsheet is a grid of <strong>cells</strong>. Columns are labeled with letters (A, B, C...), rows with numbers (1, 2, 3...), so <code>B5</code> means column B, row 5. A <strong>range</strong> is a block of cells written as <code>A1:D10</code>. Every formula starts with <code>=</code>, followed by a function name like <code>SUM</code> or <code>IF</code> and its arguments in parentheses. When you copy a formula to another cell, references shift relative to the new position — unless you lock them with dollar signs (<code>$A$1</code>).</p>
+    <p>Formulas can reference other sheets with <code>Sheet2!A1</code>, nest functions inside each other, and handle everything from simple arithmetic to complex lookups across thousands of rows.</p>
+    <div class="cta-wrap">
+      <a href="/guide" class="cta-btn">View more on our guide →</a>
+    </div>
+  </section>
+
+  <section class="formula-ref" id="reference">
+    <h2 class="section-heading">Reference</h2>
+    <p class="section-subtitle">All Excel and Google Sheets functions, paginated. Hover over a short explanation to see full details.</p>
+    <div class="ref-controls">
+      <input type="text" id="ref-search" placeholder="Search all formulas...">
+      <select id="ref-category">
+        <option value="all">All categories</option>
+        <option value="Math & Trig">Math & Trig</option>
+        <option value="Statistical">Statistical</option>
+        <option value="Logical">Logical</option>
+        <option value="Lookup & Reference">Lookup & Reference</option>
+        <option value="Text">Text</option>
+        <option value="Date & Time">Date & Time</option>
+        <option value="Financial">Financial</option>
+        <option value="Information">Information</option>
+        <option value="Engineering">Engineering</option>
+        <option value="Array">Array</option>
+      </select>
+      <div class="sort-btn" id="sort-btn" data-dir="asc">Length <span class="arrow">↑</span></div>
+    </div>
+    <div class="ref-pagination" id="ref-pagination"></div>
+    <div class="ref-list" id="ref-list"></div>
+  </section>
+
+  <section class="pricing" id="pricing">
+    <h2>Pricing</h2>
+    <div class="price-grid">
+      <div class="price-card">
+        <h3>Free</h3>
+        <div class="amount">$0</div>
+        <ul>
+          <li>No signup required</li>
+          <li>Explain, generate, and fix formulas</li>
+          <li>One formula at a time</li>
+        </ul>
+      </div>
+      <div class="price-card paid">
+        <h3>Paid</h3>
+        <div class="amount">$2.99<span>/mo</span></div>
+        <ul>
+          <li>Everything in Free</li>
+          <li>Bulk sheet analysis</li>
+          <li>Review up to 50 formulas at once</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lifetime-note">Prefer to pay once? <a href="#">Lifetime pass on Gumroad</a></p>
+  </section>
+
+  <section class="teaser">
+    <h2>Audit every formula in your workbook — in one pass</h2>
+    <p>Spreadsheets accumulate technical debt. A workbook built three years ago by a colleague who's since left the company, with tabs feeding into tabs and no documentation. Before you trust the numbers, you need to know what every formula actually does.</p>
+    <p>Bulk mode accepts up to 50 formulas — paste them directly or upload an .xlsx file — and returns a complete audit. Each formula gets a plain-language explanation, structural anomalies are flagged against neighboring cells in the same column, and results can be downloaded as a CSV for documentation or compliance.</p>
+    <div class="features">
+      <div class="feat">Paste up to 50 formulas or upload an entire .xlsx file</div>
+      <div class="feat">Column-level pattern detection catches copy-paste errors</div>
+      <div class="feat">Every formula explained in plain language</div>
+      <div class="feat">Download results as a CSV for your records</div>
+    </div>
+  </section>
+
+  <section class="faq" id="faq">
+    <h2>FAQ (Frequently Asked Questions)</h2>
+    <details>
+      <summary>Does this work for Google Sheets and Excel?</summary>
+      <p>Yes. The formula syntax for both is nearly identical, and results work for either.</p>
+    </details>
+    <details>
+      <summary>Is my data or my formulas stored?</summary>
+      <p>No. Formulas are sent for processing and not saved afterward. We don't store anything.</p>
+    </details>
+    <details>
+      <summary>What happens after the free limit?</summary>
+      <p>You can keep using single-formula requests for free. Bulk review needs the paid plan.</p>
+    </details>
+    <details>
+      <summary>How accurate is it?</summary>
+      <p>It's reliable for standard Excel and Google Sheets syntax. Always check results before using them in critical work.</p>
+    </details>
+  </section>
+
+</div>
+
+<footer>
+  <a href="#basics">Basics</a>
+  <a href="#reference">Reference</a>
+  <a href="#pricing">Pricing</a>
+  <a href="#faq">FAQ</a>
+  <a href="/guide">Guide</a>
+  <a href="mailto:feedback@formulafixer.org?subject=FormulaFixer%20feedback">Feedback</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+  // ─── SUPABASE INIT ────────────────────────────────────────────
+  const supabase = window.supabase.createClient(window.ENV.SUPABASE_URL, window.ENV.SUPABASE_ANON_KEY);
+  let authUser = null;
+  let hasActiveSub = false;
+
+  async function refreshAuthState(){
+    const { data: { session } } = await supabase.auth.getSession();
+    authUser = session?.user ?? null;
+    if (authUser) {
+      const { data: subData } = await supabase
+        .from('subscriptions').select('status').eq('user_id', authUser.id).maybeSingle();
+      hasActiveSub = (subData && subData.status === 'active');
+    } else {
+      hasActiveSub = false;
+    }
+    renderAuthUI();
+  }
+
+  function renderAuthUI(){
+    const area = document.getElementById('auth-area');
+    if (authUser) {
+      const avatar = authUser.user_metadata?.avatar_url || '';
+      const name = authUser.user_metadata?.full_name || authUser.email;
+      area.innerHTML = `
+        <span class="user-info">
+          ${avatar ? `<img src="${escapeHtml(avatar)}" alt="">` : ''}
+          <span>${escapeHtml(name)}</span>
+        </span>
+        <button class="btn-signout" id="btn-signout">Sign out</button>
+      `;
+      document.getElementById('btn-signout').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.reload();
+      });
+    } else {
+      area.innerHTML = `
+        <button class="btn-google" id="btn-google-signin">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Sign in with Google
+        </button>
+      `;
+      document.getElementById('btn-google-signin').addEventListener('click', async () => {
+        await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+      });
+    }
+  }
+
+  refreshAuthState();
+  supabase.auth.onAuthStateChange(() => { refreshAuthState(); });
+
+  // Stripe redirects back here right after checkout, but the webhook that
+  // actually activates the subscription can land a moment later. Without this,
+  // a paying user would land back on the site and immediately see the paywall
+  // again because hasActiveSub hasn't updated yet.
+  if (new URLSearchParams(window.location.search).get('subscribed') === 'true') {
+    window.history.replaceState({}, '', window.location.pathname);
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      await refreshAuthState();
+      if (hasActiveSub || attempts >= 6) clearInterval(poll);
+    }, 1500);
+  }
+
+  // ─── FORMULA LIBRARY ──────────────────────────────────────────
+  const formulaLibrary = [
+    { formula:"=SUM(A1:A10)", explanation:"Adds all numbers in the range A1 through A10.", category:"Math & Trig", date:"1985" },
+    { formula:"=SUMIF(A:A,\">10\",B:B)", explanation:"Sums values in column B where the corresponding cell in column A is greater than 10.", category:"Math & Trig", date:"1997" },
+    { formula:"=SUMIFS(D:D,A:A,\"Red\",B:B,\">5\")", explanation:"Sums column D where column A is \"Red\" AND column B exceeds 5.", category:"Math & Trig", date:"2007" },
+    { formula:"=SUMPRODUCT((A1:A10=B1)*(C1:C10))", explanation:"Multiplies arrays element-by-element then sums the results.", category:"Math & Trig", date:"1995" },
+    { formula:"=ROUND(B2,2)", explanation:"Rounds the value in B2 to 2 decimal places.", category:"Math & Trig", date:"1985" },
+    { formula:"=ROUNDUP(C3,0)", explanation:"Always rounds the number in C3 up to the next whole number.", category:"Math & Trig", date:"1985" },
+    { formula:"=ROUNDDOWN(D4,1)", explanation:"Always rounds the number in D4 down toward zero to 1 decimal place.", category:"Math & Trig", date:"1985" },
+    { formula:"=INT(E5)", explanation:"Rounds the number in E5 down to the nearest integer.", category:"Math & Trig", date:"1985" },
+    { formula:"=ABS(F6)", explanation:"Returns the absolute value of the number in F6.", category:"Math & Trig", date:"1985" },
+    { formula:"=MOD(G7,3)", explanation:"Returns the remainder after dividing G7 by 3.", category:"Math & Trig", date:"1985" },
+    { formula:"=POWER(H8,2)", explanation:"Raises H8 to the power of 2 (squares it).", category:"Math & Trig", date:"2003" },
+    { formula:"=SQRT(I9)", explanation:"Returns the square root of the value in I9.", category:"Math & Trig", date:"1985" },
+    { formula:"=RAND()", explanation:"Generates a random decimal between 0 and 1.", category:"Math & Trig", date:"1985" },
+    { formula:"=RANDBETWEEN(1,100)", explanation:"Generates a random whole number between 1 and 100.", category:"Math & Trig", date:"2003" },
+    { formula:"=PI()", explanation:"Returns the mathematical constant π (approximately 3.14159).", category:"Math & Trig", date:"1985" },
+    { formula:"=TRUNC(J10,2)", explanation:"Truncates J10 to 2 decimal places by chopping off extra digits.", category:"Math & Trig", date:"2003" },
+    { formula:"=CEILING(K11,0.5)", explanation:"Rounds K11 up to the nearest multiple of 0.5.", category:"Math & Trig", date:"1995" },
+    { formula:"=FLOOR(L12,0.5)", explanation:"Rounds L12 down to the nearest multiple of 0.5.", category:"Math & Trig", date:"1995" },
+    { formula:"=PRODUCT(A1:A5)", explanation:"Multiplies all numbers in the range A1:A5 together.", category:"Math & Trig", date:"1985" },
+    { formula:"=SUBTOTAL(9,A1:A100)", explanation:"Sums A1:A100 while respecting filters — only visible rows are included.", category:"Math & Trig", date:"1995" },
+    { formula:"=ROMAN(2024)", explanation:"Converts the number 2024 to its Roman numeral representation.", category:"Math & Trig", date:"1995" },
+    { formula:"=SIGN(M13)", explanation:"Returns 1 if M13 is positive, -1 if negative, 0 if zero.", category:"Math & Trig", date:"1985" },
+    { formula:"=AVERAGE(B2:B20)", explanation:"Returns the arithmetic mean of the values in B2 through B20.", category:"Statistical", date:"1985" },
+    { formula:"=AVERAGEIF(C:C,\">0\",D:D)", explanation:"Averages values in column D where column C is greater than 0.", category:"Statistical", date:"2007" },
+    { formula:"=MEDIAN(E2:E50)", explanation:"Returns the middle value in the set E2:E50.", category:"Statistical", date:"2003" },
+    { formula:"=MODE(F2:F50)", explanation:"Returns the most frequently occurring number in the range.", category:"Statistical", date:"2003" },
+    { formula:"=STDEV(G2:G30)", explanation:"Calculates the standard deviation of a sample.", category:"Statistical", date:"1995" },
+    { formula:"=STDEV.P(H2:H30)", explanation:"Calculates the standard deviation of the entire population.", category:"Statistical", date:"2010" },
+    { formula:"=VAR(I2:I30)", explanation:"Calculates the variance of a sample.", category:"Statistical", date:"1995" },
+    { formula:"=COUNT(J2:J100)", explanation:"Counts how many cells in J2:J100 contain numbers.", category:"Statistical", date:"1985" },
+    { formula:"=COUNTA(K:K)", explanation:"Counts how many cells in column K are not empty.", category:"Statistical", date:"1985" },
+    { formula:"=COUNTBLANK(L1:L50)", explanation:"Counts how many cells are completely empty.", category:"Statistical", date:"1995" },
+    { formula:"=COUNTIF(M:M,\"Yes\")", explanation:"Counts how many cells contain the exact text \"Yes\".", category:"Statistical", date:"1997" },
+    { formula:"=COUNTIFS(A:A,\"Red\",B:B,\">10\")", explanation:"Counts rows where column A is \"Red\" AND column B > 10.", category:"Statistical", date:"2007" },
+    { formula:"=MAX(N2:N50)", explanation:"Returns the largest numeric value in the range.", category:"Statistical", date:"1985" },
+    { formula:"=MIN(O2:O50)", explanation:"Returns the smallest numeric value in the range.", category:"Statistical", date:"1985" },
+    { formula:"=LARGE(P2:P100,3)", explanation:"Returns the 3rd largest value in the range.", category:"Statistical", date:"1995" },
+    { formula:"=SMALL(Q2:Q100,2)", explanation:"Returns the 2nd smallest value in the range.", category:"Statistical", date:"1995" },
+    { formula:"=RANK(R5,R2:R50)", explanation:"Returns the rank of R5 within the list.", category:"Statistical", date:"1995" },
+    { formula:"=PERCENTILE(S2:S100,0.9)", explanation:"Returns the 90th percentile value.", category:"Statistical", date:"2007" },
+    { formula:"=CORREL(T2:T50,U2:U50)", explanation:"Calculates the correlation coefficient between two datasets.", category:"Statistical", date:"2003" },
+    { formula:"=IF(A1>10,\"Yes\",\"No\")", explanation:"Returns \"Yes\" if A1 > 10, otherwise \"No\".", category:"Logical", date:"1985" },
+    { formula:"=AND(B2>0,B2<100)", explanation:"Returns TRUE only if ALL conditions are true.", category:"Logical", date:"1985" },
+    { formula:"=OR(C3=\"Red\",C3=\"Blue\")", explanation:"Returns TRUE if AT LEAST ONE condition is true.", category:"Logical", date:"1985" },
+    { formula:"=NOT(D4=0)", explanation:"Reverses the logical value.", category:"Logical", date:"1985" },
+    { formula:"=IFERROR(VLOOKUP(E5,Q:R,2,FALSE),\"Not found\")", explanation:"Shows \"Not found\" if VLOOKUP produces an error.", category:"Logical", date:"2007" },
+    { formula:"=IFS(F6<50,\"Low\",F6<80,\"Medium\",F6>=80,\"High\")", explanation:"Tests multiple conditions, returns first match.", category:"Logical", date:"2019" },
+    { formula:"=SWITCH(G7,\"A\",\"Excellent\",\"B\",\"Good\",\"C\",\"Fair\",\"Needs review\")", explanation:"Compares G7 against a list and returns the matching result.", category:"Logical", date:"2019" },
+    { formula:"=XOR(H8>0,H9>0)", explanation:"Returns TRUE if exactly one condition is true.", category:"Logical", date:"2013" },
+    { formula:"=IFNA(VLOOKUP(I10,A:B,2,FALSE),\"Missing\")", explanation:"Catches only #N/A errors from lookups.", category:"Logical", date:"2013" },
+    { formula:"=VLOOKUP(J2,A1:D100,3,FALSE)", explanation:"Searches vertically and returns the value from the 3rd column.", category:"Lookup & Reference", date:"1985" },
+    { formula:"=XLOOKUP(K3,B:B,C:C)", explanation:"Modern replacement for VLOOKUP. Looks for K3 in B and returns C.", category:"Lookup & Reference", date:"2021" },
+    { formula:"=INDEX(B2:D10,MATCH(L4,A2:A10,0),MATCH(M4,B1:D1,0))", explanation:"Two-way lookup at a row-column intersection.", category:"Lookup & Reference", date:"1985" },
+    { formula:"=MATCH(\"apple\",N1:N50,0)", explanation:"Returns the position of \"apple\" in the range.", category:"Lookup & Reference", date:"1995" },
+    { formula:"=HLOOKUP(O5,A1:F3,2,FALSE)", explanation:"Horizontal lookup in the first row.", category:"Lookup & Reference", date:"1985" },
+    { formula:"=OFFSET(P6,2,3,1,1)", explanation:"Returns a reference offset by rows and columns.", category:"Lookup & Reference", date:"1995" },
+    { formula:"=INDIRECT(\"A\"&Q7)", explanation:"Converts a text string into a cell reference.", category:"Lookup & Reference", date:"1995" },
+    { formula:"=CHOOSE(R8,\"Small\",\"Medium\",\"Large\")", explanation:"Returns the Nth item from a list.", category:"Lookup & Reference", date:"1985" },
+    { formula:"=ROW(S9)", explanation:"Returns the row number of cell S9.", category:"Lookup & Reference", date:"1985" },
+    { formula:"=COLUMN(T10)", explanation:"Returns the column number of cell T10.", category:"Lookup & Reference", date:"1985" },
+    { formula:"=TRANSPOSE(U1:U5)", explanation:"Flips a vertical range to horizontal or vice versa.", category:"Lookup & Reference", date:"1995" },
+    { formula:"=FILTER(A1:C100,D1:D100=\"Yes\")", explanation:"Returns rows where column D equals \"Yes\".", category:"Lookup & Reference", date:"2021" },
+    { formula:"=LEFT(V2,5)", explanation:"Extracts the first 5 characters from the left.", category:"Text", date:"1985" },
+    { formula:"=RIGHT(W3,3)", explanation:"Extracts the last 3 characters from the right.", category:"Text", date:"1985" },
+    { formula:"=MID(X4,4,6)", explanation:"Extracts 6 characters starting at position 4.", category:"Text", date:"1985" },
+    { formula:"=LEN(Y5)", explanation:"Returns the character count of the text.", category:"Text", date:"1985" },
+    { formula:"=TRIM(Z6)", explanation:"Removes leading, trailing, and extra spaces.", category:"Text", date:"1985" },
+    { formula:"=CONCATENATE(A1,\" \",B1)", explanation:"Joins A1 and B1 with a space.", category:"Text", date:"1985" },
+    { formula:"=TEXTJOIN(\", \",TRUE,A1:A10)", explanation:"Joins all values with a comma, skipping empties.", category:"Text", date:"2019" },
+    { formula:"=UPPER(C2)", explanation:"Converts text to uppercase.", category:"Text", date:"1985" },
+    { formula:"=LOWER(D3)", explanation:"Converts text to lowercase.", category:"Text", date:"1985" },
+    { formula:"=PROPER(E4)", explanation:"Capitalizes the first letter of each word.", category:"Text", date:"1985" },
+    { formula:"=SUBSTITUTE(F5,\"old\",\"new\")", explanation:"Replaces all occurrences of \"old\" with \"new\".", category:"Text", date:"1995" },
+    { formula:"=REPLACE(G6,3,2,\"XX\")", explanation:"Inserts \"XX\" at position 3, removing 2 chars.", category:"Text", date:"1985" },
+    { formula:"=FIND(\"@\",H7)", explanation:"Returns the position of \"@\", case-sensitive.", category:"Text", date:"1985" },
+    { formula:"=SEARCH(\"hello\",I8)", explanation:"Case-insensitive search for \"hello\".", category:"Text", date:"1985" },
+    { formula:"=TEXT(J9,\"mm/dd/yyyy\")", explanation:"Formats a value as text in the given format.", category:"Text", date:"1985" },
+    { formula:"=VALUE(K10)", explanation:"Converts a text number into an actual number.", category:"Text", date:"1985" },
+    { formula:"=TEXTSPLIT(L11,\",\")", explanation:"Splits text at each comma into separate cells.", category:"Text", date:"2022" },
+    { formula:"=TODAY()", explanation:"Returns today's date, updates daily.", category:"Date & Time", date:"1995" },
+    { formula:"=NOW()", explanation:"Returns the current date and time.", category:"Date & Time", date:"1995" },
+    { formula:"=DATE(2025,12,25)", explanation:"Creates a date from year, month, day numbers.", category:"Date & Time", date:"1985" },
+    { formula:"=YEAR(M2)", explanation:"Extracts the year from a date.", category:"Date & Time", date:"1985" },
+    { formula:"=MONTH(N3)", explanation:"Extracts the month (1-12) from a date.", category:"Date & Time", date:"1985" },
+    { formula:"=DAY(O4)", explanation:"Extracts the day (1-31) from a date.", category:"Date & Time", date:"1985" },
+    { formula:"=WEEKDAY(P5)", explanation:"Returns the day of the week (1=Sunday).", category:"Date & Time", date:"1995" },
+    { formula:"=DATEDIF(Q6,R6,\"M\")", explanation:"Months between two dates. Legacy function.", category:"Date & Time", date:"1995" },
+    { formula:"=EOMONTH(S7,0)", explanation:"Last day of the month. 0 = this month.", category:"Date & Time", date:"2003" },
+    { formula:"=EDATE(T8,3)", explanation:"Date 3 months after T8.", category:"Date & Time", date:"2003" },
+    { formula:"=NETWORKDAYS(U9,V9)", explanation:"Working days between two dates.", category:"Date & Time", date:"2007" },
+    { formula:"=TIME(14,30,0)", explanation:"Creates a time from hours, minutes, seconds.", category:"Date & Time", date:"1985" },
+    { formula:"=HOUR(W10)", explanation:"Extracts the hour (0-23) from a time.", category:"Date & Time", date:"1985" },
+    { formula:"=PMT(X11/12,60,-10000)", explanation:"Monthly loan payment calculation.", category:"Financial", date:"1985" },
+    { formula:"=FV(Y12/12,120,-200,0)", explanation:"Future value of periodic investments.", category:"Financial", date:"1985" },
+    { formula:"=PV(Z13/12,240,-500)", explanation:"Present value of future payments.", category:"Financial", date:"1985" },
+    { formula:"=NPV(A14,B1:B10)", explanation:"Net present value of cash flows.", category:"Financial", date:"1985" },
+    { formula:"=IRR(C1:C10)", explanation:"Internal rate of return for cash flows.", category:"Financial", date:"1985" },
+    { formula:"=ISBLANK(D15)", explanation:"TRUE if cell is completely empty.", category:"Information", date:"1995" },
+    { formula:"=ISNUMBER(E16)", explanation:"TRUE if cell contains a number or date.", category:"Information", date:"1995" },
+    { formula:"=ISTEXT(F17)", explanation:"TRUE if cell contains text.", category:"Information", date:"1995" },
+    { formula:"=ISERROR(G18)", explanation:"TRUE if cell contains any error value.", category:"Information", date:"1995" },
+    { formula:"=CELL(\"type\",H19)", explanation:"Returns info about the cell's content type.", category:"Information", date:"1995" },
+    { formula:"=TYPE(I20)", explanation:"Returns 1 for number, 2 for text, 4 for logical, etc.", category:"Information", date:"1985" },
+    { formula:"=CONVERT(J21,\"C\",\"F\")", explanation:"Converts Celsius to Fahrenheit.", category:"Engineering", date:"2003" },
+    { formula:"=BIN2DEC(K22)", explanation:"Converts binary text to decimal.", category:"Engineering", date:"1995" },
+    { formula:"=DEC2HEX(L23)", explanation:"Converts decimal to hexadecimal.", category:"Engineering", date:"1995" },
+    { formula:"=SORT(M1:M50)", explanation:"Sorts values and spills into adjacent cells.", category:"Array", date:"2021" },
+    { formula:"=UNIQUE(N1:N100)", explanation:"Returns distinct values, removing duplicates.", category:"Array", date:"2021" },
+    { formula:"=SEQUENCE(10,1,1,1)", explanation:"Generates sequential numbers in an array.", category:"Array", date:"2021" },
+    { formula:"=RANDARRAY(5,3)", explanation:"Generates a 5×3 array of random decimals.", category:"Array", date:"2021" },
+  ];
+
+  const PER_PAGE = 20;
+  let currentPage = 1;
+  let currentSortDir = 'asc';
+  let lastBulkItems = [];
+
+  function renderFormulaRef(filterText, categoryFilter, sortDir) {
+    let list = [...formulaLibrary];
+    if (filterText) { const q = filterText.toLowerCase(); list = list.filter(f => f.formula.toLowerCase().includes(q) || f.explanation.toLowerCase().includes(q) || f.category.toLowerCase().includes(q)); }
+    if (categoryFilter && categoryFilter !== 'all') { list = list.filter(f => f.category === categoryFilter); }
+    if (sortDir === 'asc') { list.sort((a,b) => a.formula.length - b.formula.length || a.formula.localeCompare(b.formula)); }
+    else { list.sort((a,b) => b.formula.length - a.formula.length || a.formula.localeCompare(b.formula)); }
+    const totalPages = Math.ceil(list.length / PER_PAGE) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage - 1) * PER_PAGE;
+    const pageItems = list.slice(start, start + PER_PAGE);
+    document.getElementById('ref-pagination').innerHTML = `<button class="page-btn ${currentPage<=1?'disabled':''}" data-page="${currentPage-1}">← Prev</button><span class="page-info">Page ${currentPage} of ${totalPages}</span><button class="page-btn ${currentPage>=totalPages?'disabled':''}" data-page="${currentPage+1}">Next →</button>`;
+    document.querySelectorAll('#ref-pagination .page-btn:not(.disabled)').forEach(btn => { btn.addEventListener('click', () => { currentPage = parseInt(btn.dataset.page); renderFormulaRef(document.getElementById('ref-search').value, document.getElementById('ref-category').value, currentSortDir); }); });
+    const container = document.getElementById('ref-list');
+    container.innerHTML = pageItems.map(f => {
+      const truncated = f.explanation.length > 80; const short = truncated ? f.explanation.slice(0,80) : f.explanation;
+      return `<div class="ref-row"><div class="ref-formula">${escapeHtml(f.formula)}</div><div class="ref-info"><div class="ref-explain${truncated?' truncated':''}"><span class="short-text">${escapeHtml(short)}</span>${truncated?`<div class="ref-tooltip">${escapeHtml(f.explanation)}</div>`:''}</div><div class="ref-meta"><span class="ref-category">${escapeHtml(f.category)}</span><span>Introduced ${f.date}</span></div></div></div>`;
+    }).join('');
+    container.querySelectorAll('.ref-explain.truncated').forEach(el => {
+      el.addEventListener('mouseenter', () => { const t = el.querySelector('.ref-tooltip'); if(!t) return; const r = el.getBoundingClientRect(); t.style.left = r.left+'px'; t.style.top = (r.top - t.offsetHeight - 10)+'px'; t.style.display = 'block'; });
+      el.addEventListener('mouseleave', () => { const t = el.querySelector('.ref-tooltip'); if(t) t.style.display = 'none'; });
+    });
+  }
+
+  function escapeCsvField(field) {
+    const s = String(field || ''); if (s.includes(',') || s.includes('"') || s.includes('\n')) { return '"' + s.replace(/"/g, '""') + '"'; } return s;
+  }
+  function downloadBulkCsv() {
+    if (!lastBulkItems || !lastBulkItems.length) return;
+    const rows = lastBulkItems.map(i => escapeCsvField(i.cell)+','+escapeCsvField(i.formula)+','+escapeCsvField(i.explanation)+','+escapeCsvField(i.issue||''));
+    const csv = 'Cell,Formula,Explanation,Flag\n' + rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'formulafixer-bulk-results.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
+
+  // ─── TOOL LOGIC ───────────────────────────────────────────────
+  const tabs = document.querySelectorAll('.tab');
+  const input = document.getElementById('formula-input');
+  const runBtn = document.getElementById('run-btn');
+  const resultPanel = document.getElementById('result-panel');
+  const resultCard = document.getElementById('result-card');
+  const bulkTools = document.getElementById('bulk-tools');
+  const bulkFileInput = document.getElementById('bulk-file-input');
+  const fileName = document.getElementById('file-name');
+  const exampleChips = document.getElementById('example-chips');
+  const paywallPrompt = document.getElementById('paywall-prompt');
+  const paywallBtn = document.getElementById('paywall-btn');
+
+  const modeConfig = {
+    explain: { placeholder: '=VLOOKUP(A2,Sheet2!A:B,2,FALSE)', button: 'Explain formula', label: 'Explanation', bulk: false },
+    generate: { placeholder: 'total sales where the date is this month', button: 'Generate formula', label: 'Formula', bulk: false },
+    fix: { placeholder: '=VLOOKUP(A2 Sheet2!A:B 2 FALSE)', button: 'Fix formula', label: 'Fixed formula', bulk: false },
+    bulk: { placeholder: 'One formula per line:\n=SUM(A1:A10)\n=VLOOKUP(B2,Sheet2!C:D,2,FALSE)', button: 'Analyze all formulas', label: 'Bulk analysis', bulk: true }
+  };
+
+  let currentMode = 'explain';
+  let bulkFileData = null;
+
+  function setMode(mode){
+    if (mode === 'bulk' && !hasActiveSub) {
+      paywallPrompt.classList.add('active');
+      bulkTools.classList.remove('active');
+      input.classList.remove('bulk-mode');
+      if (authUser) {
+        paywallBtn.textContent = 'Subscribe';
+        paywallBtn.onclick = async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) return;
+          const res = await fetch('/api/create-checkout-session', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${session.access_token}` } });
+          const d = await res.json();
+          if (d.url) window.location.href = d.url;
+          else alert('Could not start checkout.');
+        };
+      } else {
+        paywallBtn.textContent = 'Sign in to subscribe';
+        paywallBtn.onclick = () => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+      }
+      tabs.forEach(t => t.classList.remove('active'));
+      document.querySelector('.tab[data-mode="bulk"]').classList.add('active');
+      exampleChips.style.display = 'none';
+      document.querySelector('.examples-label').style.display = 'none';
+      return;
+    }
+    paywallPrompt.classList.remove('active');
+    currentMode = mode;
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+    input.placeholder = modeConfig[mode].placeholder;
+    runBtn.textContent = modeConfig[mode].button;
+    if (modeConfig[mode].bulk) {
+      input.classList.add('bulk-mode'); bulkTools.classList.add('active');
+      exampleChips.style.display = 'none';
+      document.querySelector('.examples-label').style.display = 'none';
+    } else {
+      input.classList.remove('bulk-mode'); bulkTools.classList.remove('active');
+      exampleChips.style.display = '';
+      document.querySelector('.examples-label').style.display = '';
+      bulkFileData = null; fileName.textContent = ''; bulkFileInput.value = '';
+    }
+  }
+
+  tabs.forEach(tab => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
+  document.querySelectorAll('#example-chips .chip').forEach(chip => {
+    chip.addEventListener('click', () => { setMode(chip.dataset.mode); input.value = chip.dataset.text; input.focus(); });
+  });
+
+  function escapeHtml(str){ return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function highlightFormula(str){ const e = escapeHtml(str); return e.replace(/"([^"]*)"/g,'<span style="color:#B45309">"$1"</span>').replace(/\b([A-Z]{2,})\(/g,'<span style="color:#1D4ED8;font-weight:600">$1</span>(').replace(/\b([A-Z]+\d+|[A-Z]+:[A-Z]+|\$[A-Z]+\$?\d*)\b/g,'<span style="color:var(--accent-dark)">$1</span>'); }
+  function copyToClipboard(text, btn){ const d = () => { btn.textContent='Copied'; setTimeout(()=>{btn.textContent='Copy'},1500); }; if(navigator.clipboard&&window.isSecureContext){ navigator.clipboard.writeText(text).then(d).catch(()=>fallbackCopy(text,d)); } else { fallbackCopy(text,d); } }
+  function fallbackCopy(text, done){ const ta = document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy'); done();}catch(e){} document.body.removeChild(ta); }
+
+  const RECENT_KEY = 'formulafixer_recent';
+  function saveRecent(mode, value){ if(mode==='bulk')return; let list=[]; try{list=JSON.parse(localStorage.getItem(RECENT_KEY))||[];}catch(e){} list=list.filter(i=>i.value!==value); list.unshift({mode,value}); list=list.slice(0,5); localStorage.setItem(RECENT_KEY,JSON.stringify(list)); renderRecent(); }
+  function renderRecent(){ let list=[]; try{list=JSON.parse(localStorage.getItem(RECENT_KEY))||[];}catch(e){} const box=document.getElementById('recent-list'); if(!list.length){box.style.display='none';return;} box.style.display='flex'; box.innerHTML=list.map(i=>`<div class="chip" data-mode="${i.mode}" data-text="${escapeHtml(i.value)}">${escapeHtml(i.value)}</div>`).join(''); box.querySelectorAll('.chip').forEach(c=>{c.addEventListener('click',()=>{setMode(c.dataset.mode);input.value=c.dataset.text;input.focus();});}); }
+  renderRecent();
+
+  function showLoading(){ resultPanel.style.display='block'; resultCard.innerHTML='<p class="inline-status">Working<span class="blink">▏</span></p>'; }
+  function showError(msg){ resultPanel.style.display='block'; resultCard.innerHTML='<p class="error-line">'+escapeHtml(msg||'That formula couldn\'t be processed.')+'</p>'; }
+
+  function showResult(mode, data){
+    resultPanel.style.display='block'; const label=modeConfig[mode].label; let ft,html;
+    if(mode==='explain'){ ft=input.value; html=`<p class="result-label">${label}</p><div class="formula-box">${highlightFormula(ft)}<button class="copy-btn">Copy</button></div><p class="explanation">${escapeHtml(data.explanation||'')}</p>`; }
+    else { ft=data.formula||''; html=`<p class="result-label">${label}</p><div class="formula-box">${highlightFormula(ft)}<button class="copy-btn">Copy</button></div><p class="explanation">${escapeHtml(data.explanation||'')}</p><p style="margin:10px 0 0;"><a href="https://sheets.new" target="_blank" rel="noopener" style="font-size:13px;color:var(--accent-dark);text-decoration:none;">Open a blank Google Sheet →</a></p>`; }
+    resultCard.innerHTML=html; const cb=resultCard.querySelector('.copy-btn'); if(cb) cb.addEventListener('click',()=>copyToClipboard(ft,cb));
+    resultPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+
+  function showBulkResults(items){
+    lastBulkItems=items; resultPanel.style.display='block';
+    let html=`<p class="result-label">Bulk analysis (${items.length} formulas)</p><table class="bulk-table"><thead><tr><th>Cell</th><th>Formula</th><th>Explanation</th><th>Flag</th></tr></thead><tbody>`;
+    items.forEach(item=>{ const flagged=item.issue&&item.issue.trim()!==''; html+=`<tr${flagged?' class="flagged"':''}><td class="cell">${escapeHtml(item.cell||'')}</td><td class="formula">${highlightFormula(item.formula||'')}</td><td class="explanation">${escapeHtml(item.explanation||'')}</td><td class="flag">${escapeHtml(item.issue||'')}</td></tr>`; });
+    html+='</tbody></table><div class="bulk-download"><button class="dl-btn" id="dl-csv-btn">Download CSV</button></div>';
+    resultCard.innerHTML=html; document.getElementById('dl-csv-btn').addEventListener('click',downloadBulkCsv);
+    resultPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+
+  async function getAuthHeaders(){
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) return { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' };
+    return { 'Content-Type': 'application/json' };
+  }
+
+  async function runTool(){
+    if (currentMode === 'bulk') { await runBulk(); return; }
+    const value = input.value.trim(); if (!value) { input.focus(); return; }
+    runBtn.disabled = true; showLoading();
+    try {
+      const headers = await getAuthHeaders();
+      const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 20000);
+      const response = await fetch("/api/formula", { method:"POST", headers, body:JSON.stringify({ mode:currentMode, value }), signal:controller.signal });
+      clearTimeout(timeoutId);
+      if (!response.ok) throw new Error('bad response');
+      const parsed = await response.json(); showResult(currentMode, parsed); saveRecent(currentMode, value);
+    } catch (err) { showError(err.name === 'AbortError' ? 'That\'s taking too long. Try again in a moment.' : null); }
+    finally { runBtn.disabled = false; }
+  }
+
+  async function runBulk(){
+    let items = [];
+    if (bulkFileData) { items = bulkFileData; }
+    else { const lines = input.value.split('\n').filter(l => l.trim()); for (const line of lines) { const t = line.trim(); const m = t.match(/^([A-Z]+\d+):\s*(.+)/); items.push(m ? { cell:m[1], formula:m[2] } : { cell:'', formula:t }); } }
+    if (!items.length) { input.focus(); return; }
+    if (items.length > 50) { showError('Up to 50 formulas per batch.'); return; }
+    runBtn.disabled = true; showLoading();
+    try {
+      const headers = await getAuthHeaders();
+      const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 20000);
+      const response = await fetch("/api/formula", { method:"POST", headers, body:JSON.stringify({ mode:"bulk", items }), signal:controller.signal });
+      clearTimeout(timeoutId);
+      if (response.status === 402) { showError('Subscription required for bulk analysis.'); return; }
+      if (!response.ok) throw new Error('bad response');
+      const data = await response.json();
+      if (data.items && Array.isArray(data.items)) showBulkResults(data.items); else showError();
+    } catch (err) { showError(err.name === 'AbortError' ? 'That\'s taking too long. Try again in a moment.' : null); }
+    finally { runBtn.disabled = false; }
+  }
+
+  bulkFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    fileName.textContent = file.name; const ext = file.name.split('.').pop().toLowerCase();
+    const cellRefPattern = /^[A-Z]+[0-9]+$/;
+    if (ext === 'csv') { const text = await file.text(); const lines = text.split('\n').filter(l => l.trim()); bulkFileData = lines.map(line => { const ci = line.indexOf(','); const ff = ci === -1 ? line.trim() : line.slice(0, ci).trim(); if (ci !== -1 && cellRefPattern.test(ff)) return { cell:ff, formula:line.slice(ci+1).trim() }; return { cell:'', formula:line.trim() }; }); }
+    else if (ext === 'xlsx') { const data = await file.arrayBuffer(); const workbook = XLSX.read(data, { type:'array' }); const sheet = workbook.Sheets[workbook.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json(sheet, { header:1 }); bulkFileData = []; for (let r=0; r<rows.length; r++) { const row = rows[r]; if (!row || !row.length) continue; for (let c=0; c<row.length; c++) { const cellObj = sheet[XLSX.utils.encode_cell({ r, c })]; if (cellObj && cellObj.f) bulkFileData.push({ cell:XLSX.utils.encode_cell({r,c}), formula:cellObj.f }); } } }
+    if (bulkFileData.length) input.value = bulkFileData.map(i => i.cell ? i.cell+': '+i.formula : i.formula).join('\n');
+  });
+  input.addEventListener('input', () => { if (bulkFileData) { bulkFileData = null; fileName.textContent = ''; bulkFileInput.value = ''; } });
+  runBtn.addEventListener('click', runTool);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runTool(); });
+
+  const refSearch = document.getElementById('ref-search');
+  const refCategory = document.getElementById('ref-category');
+  const sortBtn = document.getElementById('sort-btn');
+  refSearch.addEventListener('input', () => { currentPage = 1; renderFormulaRef(refSearch.value, refCategory.value, currentSortDir); });
+  refCategory.addEventListener('change', () => { currentPage = 1; renderFormulaRef(refSearch.value, refCategory.value, currentSortDir); });
+  sortBtn.addEventListener('click', () => { currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc'; sortBtn.querySelector('.arrow').textContent = currentSortDir === 'asc' ? '↑' : '↓'; currentPage = 1; renderFormulaRef(refSearch.value, refCategory.value, currentSortDir); });
+  renderFormulaRef('', 'all', 'asc');
+</script>
+</body>
+</html>

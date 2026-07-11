@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FormulaFixer — Guide</title>
+<meta name="description" content="Learn spreadsheet formula syntax, explore advanced concepts, and understand how Excel, Google Sheets, and LibreOffice work.">
+<link rel="canonical" href="https://formulafixer.org/guide">
+<link rel="icon" href="/favicon.png" type="image/png">
+
+<meta property="og:title" content="FormulaFixer Guide — Formula Syntax, Spreadsheet Basics & Tools">
+<meta property="og:description" content="Learn how spreadsheet formulas are built, get a full primer on cells, ranges, and functions, and see how Excel, Google Sheets, and LibreOffice compare.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://formulafixer.org/guide">
+<meta property="og:image" content="https://formulafixer.org/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF; --bg-tint:#F4F7F5; --ink:#16191A; --ink-soft:#63706A;
+    --ink-faint:#95A099; --accent:#1E7A54; --accent-dark:#155E40;
+    --accent-soft:#E7F3EC; --line:#E3E8E4; --line-strong:#CBD5CE;
+    --header-bg:#028355; --header-text:#FFFFFF;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; scroll-behavior:smooth; }
+  body{ font-family:var(--sans); color:var(--ink); background:var(--bg); line-height:1.5; -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; }
+  .wrap{ max-width:760px; margin:0 auto; padding:0 24px; }
+
+  header.site{
+    background:var(--header-bg); color:var(--header-text);
+    position:sticky; top:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 24px; max-width:100%;
+  }
+  .logo{ display:flex; align-items:center; justify-content:center; background:#fff; border-radius:24px; padding:6px 10px; text-decoration:none; }
+  .logo img{ width:20px; height:20px; }
+  .header-title{ font-weight:600; font-size:15px; color:#fff; }
+  nav.site-links{ display:flex; gap:18px; font-size:13px; color:rgba(255,255,255,0.85); flex-wrap:wrap; }
+  nav.site-links a{ text-decoration:none; }
+  nav.site-links a:hover{ color:#fff; }
+
+  .section-heading{ font-size:22px; font-weight:600; margin:36px 0 6px; }
+  .section-heading:first-of-type{ margin-top:32px; }
+  .section-subtitle{ font-size:13px; color:var(--ink-faint); margin:0 0 24px; }
+  h3{ font-size:16px; font-weight:600; margin:28px 0 8px; }
+  h3:first-of-type{ margin-top:0; }
+  p{ font-size:14px; color:var(--ink-soft); margin:0 0 10px; }
+  ul{ margin:4px 0 16px; padding-left:20px; font-size:14px; color:var(--ink-soft); }
+  li{ margin-bottom:6px; }
+  code{ font-family:var(--mono); font-size:13.5px; background:var(--accent-soft); color:var(--accent-dark); padding:2px 6px; border-radius:4px; }
+  .syntax-example{
+    font-family:var(--mono); font-size:13.5px; background:var(--bg-tint);
+    border:1px solid var(--line); border-radius:8px; padding:12px 14px;
+    color:var(--ink-soft); margin:8px 0 16px;
+  }
+
+  footer{ border-top:1px solid var(--line); padding:20px 0 40px; text-align:center; font-size:13px; color:var(--ink-faint); margin-top:48px; }
+  footer a{ text-decoration:none; color:var(--ink-soft); margin:0 10px; }
+
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#14171A; --bg-tint:#1B1F1D; --ink:#EDEFEC; --ink-soft:#9AA59E; --ink-faint:#5E685F; --accent:#3FBE85; --accent-dark:#2E9E6C; --accent-soft:#1F3B2E; --line:#2A302C; --line-strong:#3A423C; }
+  }
+  @media (max-width:600px){
+    nav.site-links{ gap:10px; font-size:11.5px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a href="/" class="logo"><img src="/logo.png" alt="FormulaFixer" width="20" height="20"></a>
+  <span class="header-title">Guide</span>
+  <nav class="site-links">
+    <a href="#basics">Basics</a>
+    <a href="#syntax-guide">Syntax Guide</a>
+    <a href="#extended-guide">Extended Guide</a>
+    <a href="/">← Back to tool</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <section id="basics">
+    <h2 class="section-heading">Basics</h2>
+    <p class="section-subtitle">A detailed primer for anyone new to working with formulas in spreadsheets.</p>
+
+    <h3>Cells, rows, columns, and sheets</h3>
+    <p>A spreadsheet is a grid. <strong>Columns</strong> are labeled with letters (A, B, C... through XFD — that's 16,384 columns in modern Excel). <strong>Rows</strong> are numbered (1, 2, 3... through 1,048,576). A <strong>cell</strong> is the intersection of a column and row — <code>B5</code> is column B, row 5. A <strong>range</strong> is a group of cells, written as two corners: <code>A1:D10</code>. A workbook contains multiple <strong>sheets</strong> (tabs), referenced with an exclamation mark: <code>Sheet2!A1</code>. You can also reference cells across different workbooks, though this requires both files to be open.</p>
+
+    <h3>Entering and editing formulas</h3>
+    <p>Click a cell and start typing with <code>=</code>. As you type a function name, a tooltip shows the expected arguments in order. Press <strong>Tab</strong> to autocomplete. Press <strong>F2</strong> to edit the active cell without using the mouse. Press <strong>Esc</strong> to cancel. When a formula references other cells, Excel draws colored borders around those cells matching the color of the reference in the formula bar — this is the fastest way to verify you selected the right range before pressing Enter.</p>
+
+    <h3>Copying and filling formulas</h3>
+    <p>When you copy a formula to another cell, relative references shift automatically. The fill handle (small green square in the bottom-right corner of a selected cell) is the fastest way to copy: drag it down or across, or double-click it to auto-fill down to match the adjacent column's height. For non-adjacent cells, Ctrl+D fills down from the top cell, and Ctrl+R fills right from the leftmost cell.</p>
+
+    <h3>Named ranges</h3>
+    <p>Instead of remembering that <code>B2:B50</code> contains your sales data, you can name that range "SalesData" and write <code>=SUM(SalesData)</code> instead. Named ranges make formulas readable and reduce errors when ranges change — update the named range once, and every formula that references it updates automatically. Create them from the Formulas tab or by typing directly into the name box left of the formula bar.</p>
+
+    <h3>Data types</h3>
+    <p>Spreadsheets distinguish between numbers, text, dates, and Boolean values (TRUE/FALSE). This matters because functions behave differently based on type. <code>=SUM("5", 5)</code> returns 5, not 10 — the text "5" is ignored. Dates are stored as sequential numbers (January 1, 1900 = 1), which is why you can subtract two dates to get the number of days between them. The <code>ISTEXT</code>, <code>ISNUMBER</code>, and <code>ISDATE</code> functions help identify types in messy datasets.</p>
+
+    <h3>Understanding error messages</h3>
+    <ul>
+      <li><code>#DIV/0!</code> — Dividing by zero or an empty cell.</li>
+      <li><code>#N/A</code> — A lookup couldn't find the value. Not always a bug; check if the value genuinely exists.</li>
+      <li><code>#VALUE!</code> — Wrong data type (e.g., adding a number to text).</li>
+      <li><code>#REF!</code> — A referenced cell was deleted or moved.</li>
+      <li><code>#NAME?</code> — Unrecognized function name (typo, or the function isn't available in your version).</li>
+      <li><code>#NUM!</code> — Numeric overflow or impossible math operation.</li>
+      <li><code>#SPILL!</code> — An array formula is blocked by existing data in the spill range.</li>
+      <li><code>#NULL!</code> — Intersection of two ranges that don't intersect. Rare in modern use.</li>
+    </ul>
+
+    <h3>Common keyboard shortcuts</h3>
+    <ul>
+      <li><strong>F2</strong> — Edit the active cell</li>
+      <li><strong>F4</strong> — Toggle absolute/relative references (repeatedly cycles through $A$1, A$1, $A1, A1)</li>
+      <li><strong>Ctrl+Enter</strong> — Fill all selected cells with the same formula</li>
+      <li><strong>Ctrl+`</strong> (backtick) — Toggle formula view across the entire sheet</li>
+      <li><strong>Ctrl+Space</strong> — Select entire column; <strong>Shift+Space</strong> — Select entire row</li>
+      <li><strong>Ctrl+Arrow keys</strong> — Jump to the edge of the data region</li>
+      <li><strong>Ctrl+Shift+Arrow keys</strong> — Select to the edge of the data region</li>
+      <li><strong>Ctrl+Home</strong> — Jump to cell A1; <strong>Ctrl+End</strong> — Jump to the last used cell</li>
+      <li><strong>Alt+=</strong> — Auto-sum the selected range</li>
+      <li><strong>Ctrl+PgUp / Ctrl+PgDn</strong> — Switch between sheets</li>
+    </ul>
+  </section>
+
+  <section id="syntax-guide">
+    <h2 class="section-heading">Formula Syntax Guide</h2>
+    <p class="section-subtitle">How formulas are structured in Excel and Google Sheets — from the ground up.</p>
+
+    <h3>The equals sign</h3>
+    <p>Every formula starts with <code>=</code>. This tells the spreadsheet "what follows is a calculation, not just text." Without it, <code>SUM(A1:A10)</code> is just a string of characters in a cell. With it, <code>=SUM(A1:A10)</code> becomes a working formula.</p>
+
+    <h3>Function names</h3>
+    <p>Functions are the verbs of formulas: <code>SUM</code>, <code>AVERAGE</code>, <code>IF</code>, <code>VLOOKUP</code>. They're always uppercase (the sheet auto-capitalizes them) and always followed by parentheses. Everything between the parentheses is the function's input — its arguments.</p>
+    <div class="syntax-example">=FUNCTION(argument1, argument2, ...)</div>
+
+    <h3>Arguments and separators</h3>
+    <p>Arguments are the values you give a function to work with. They go inside the parentheses and are separated by commas (<code>,</code>) in most regions, or semicolons (<code>;</code>) in some European locales. Arguments can be cell references, numbers, text strings, or other functions.</p>
+
+    <h3>Cell references: relative vs. absolute</h3>
+    <p>By default, references are <strong>relative</strong> — when you copy a formula down a column, <code>A1</code> becomes <code>A2</code>, then <code>A3</code>. Add dollar signs to make references <strong>absolute</strong>:</p>
+    <div class="syntax-example">$A$1  ← column and row both locked<br>$A1   ← column locked, row shifts<br>A$1   ← row locked, column shifts</div>
+
+    <h3>Ranges</h3>
+    <p>A range is a rectangular block of cells, written as <code>top-left:bottom-right</code>. <code>A1:C10</code> means all cells from A1 down to C10. Ranges can span rows (<code>1:1</code>), columns (<code>A:A</code>), or multiple sheets (<code>Sheet2!A1:B10</code>).</p>
+
+    <h3>Operators</h3>
+    <div class="syntax-example">+  addition<br>-  subtraction<br>*  multiplication<br>/  division<br>^  exponentiation<br>&  text concatenation</div>
+
+    <h3>Comparison operators</h3>
+    <p>These return TRUE or FALSE and are used inside <code>IF</code> statements, conditional formatting, or <code>FILTER</code> functions:</p>
+    <div class="syntax-example">=  equal to<br><>  not equal to<br>>  greater than<br><  less than<br>>=  greater than or equal to<br><=  less than or equal to</div>
+
+    <h3>Nesting functions</h3>
+    <p>You can put one function inside another. The inner function runs first:</p>
+    <div class="syntax-example">=IF(AVERAGE(B1:B10)>50, "Pass", "Fail")</div>
+    <p>If you find yourself nesting more than 3-4 levels, consider breaking the problem into helper columns or using <code>LET</code> for readability.</p>
+
+    <h3>Array formulas (modern Excel / Google Sheets)</h3>
+    <p>In current versions, many functions automatically spill results into adjacent cells. A single <code>=SORT(A1:A50)</code> fills all cells below with sorted values — no special keystroke needed.</p>
+  </section>
+
+  <section id="extended-guide">
+    <h2 class="section-heading">Extended Guide</h2>
+    <p class="section-subtitle">Deeper concepts that go beyond the basics — for when you're comfortable with formulas and want more control.</p>
+
+    <h3>How array formulas actually work</h3>
+    <p>An array formula operates on multiple values at once rather than a single value. In modern Excel and Google Sheets, functions like <code>SORT</code>, <code>FILTER</code>, and <code>UNIQUE</code> automatically spill results into adjacent cells. You don't need to select a range beforehand — the output range is determined dynamically. If something blocks the spill range, you get a <code>#SPILL!</code> error. Older Excel versions required Ctrl+Shift+Enter to create array formulas (sometimes called CSE formulas), but this is no longer necessary in current versions.</p>
+
+    <h3>LAMBDA and LET: building your own functions</h3>
+    <p><code>LET</code> assigns names to intermediate calculations within a single formula. Instead of repeating the same sub-calculation three times, you name it once and reference the name. This makes formulas shorter, faster, and easier to debug. <code>LAMBDA</code> goes further — it lets you define a custom function with parameters that you can reuse across the workbook without VBA or macros. For example, <code>=LAMBDA(x, x*1.1)</code> defines a function that adds 10% to its input. Combined with named ranges, LAMBDA functions become part of your permanent formula toolkit.</p>
+
+    <h3>Volatile functions</h3>
+    <p>Some functions recalculate every time any cell in the workbook changes — not just when their own inputs change. These are called volatile functions. <code>NOW()</code>, <code>TODAY()</code>, <code>RAND()</code>, <code>OFFSET()</code>, <code>INDIRECT()</code>, and <code>CELL()</code> are all volatile. In large workbooks, too many volatile functions can slow everything down because they force cascading recalculations. If performance is an issue, audit your volatile functions first — replacing <code>OFFSET</code> with <code>INDEX</code> often resolves it.</p>
+
+    <h3>Circular references and iterative calculation</h3>
+    <p>A circular reference happens when a formula refers to its own cell — either directly (<code>=A1+1</code> in cell A1) or through a chain of dependencies. By default, Excel flags these with a warning because they create an infinite loop. However, you can enable iterative calculation in settings, which tells Excel to stop after a set number of iterations. This is sometimes used intentionally for financial models that need to converge on a value, but it makes the calculation order unpredictable and can hide errors.</p>
+
+    <h3>Structured references in Excel tables</h3>
+    <p>When you format a range as a Table (Ctrl+T), Excel automatically assigns a name to the table and each column. Instead of <code>=SUM(B2:B100)</code>, you can write <code>=SUM(Table1[Sales])</code>. This is called a structured reference. It's self-documenting, automatically expands when you add rows, and is much easier to read months later. Google Sheets doesn't have this exact feature, but named ranges provide a similar benefit.</p>
+
+    <h3>Spreadsheet tools</h3>
+    <ul>
+      <li>Microsoft Excel</li>
+      <li>Google Sheets</li>
+      <li>LibreOffice Calc</li>
+    </ul>
+
+    <p>All three of these tools share the same fundamental model: a grid of cells arranged in rows and columns, where each cell can hold a value or a formula. Formulas begin with an equals sign and can reference other cells, ranges, or data from other sheets. Functions like <code>SUM</code>, <code>IF</code>, and <code>VLOOKUP</code> behave nearly identically across platforms — the syntax you learn for one transfers to the others with minimal adjustment. Collaboration features vary (Google Sheets is browser-native with real-time co-editing; Excel supports co-authoring through Microsoft 365; LibreOffice Calc is offline-first), but the formula engine underneath is remarkably consistent. All three can import and export common formats like .csv and .xlsx, making it practical to start work in one tool and finish in another.</p>
+  </section>
+
+</div>
+
+<footer>
+  <a href="/">← Back to tool</a>
+  <a href="mailto:feedback@formulafixer.org?subject=FormulaFixer%20feedback">Feedback</a>
+</footer>
+
+</body>
+</html>
