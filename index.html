@@ -135,8 +135,8 @@
 
   .cell-handle{ position:absolute; width:7px; height:7px; background:var(--accent); right:16px; bottom:16px; pointer-events:none; }
 
-  .bulk-tools{ display:none; padding:0 6px 8px; }
-  .bulk-tools.active{ display:flex; align-items:center; gap:10px; }
+  .bulk-tools{ display:none; }
+  .bulk-tools.active{ display:flex; align-items:center; gap:10px; margin-right:auto; }
   .bulk-tools .upload-btn{
     font-family:var(--sans); font-size:13px; color:var(--ink-soft);
     border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer; background:var(--bg);
@@ -159,6 +159,15 @@
   }
   .paywall-inner button:hover{ background:var(--accent-dark); }
 
+  .success-banner{ display:none; padding:14px 10px 6px; }
+  .success-banner.active{ display:block; }
+  .success-inner{
+    border:1px solid #1a7f37; border-radius:10px; padding:14px 16px;
+    background:#eafbf0; display:flex; align-items:center; gap:10px;
+  }
+  .success-inner p{ margin:0; font-size:14px; color:#166534; }
+  .success-inner .check{ font-size:16px; }
+
   .run-row{ display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:10px 10px 6px; }
   .kbd-hint{ font-family:var(--mono); font-size:11px; color:var(--ink-faint); }
   button#run-btn{ background:var(--accent); color:#fff; border:none; border-radius:8px; padding:10px 20px; font-size:14px; font-weight:500; cursor:pointer; font-family:var(--sans); }
@@ -178,6 +187,8 @@
   .copy-btn:hover{ color:var(--ink); }
   p.explanation{ font-size:14.5px; color:var(--ink); margin:0; }
   .inline-status{ font-family:var(--mono); font-size:14px; color:var(--ink-soft); }
+  .progress-track{ margin-top:12px; height:6px; border-radius:4px; background:var(--line); overflow:hidden; }
+  .progress-fill{ height:100%; background:var(--accent); border-radius:4px; transition:width 0.3s ease; }
   .blink{ animation:blink 1s step-start infinite; }
   @keyframes blink{ 50%{ opacity:0; } }
   .error-line{ font-size:14px; color:var(--ink-soft); }
@@ -194,6 +205,9 @@
   .bulk-download{ margin-top:14px; text-align:right; }
   .bulk-download .dl-btn{ font-family:var(--sans); font-size:13px; border:1px solid var(--line); border-radius:8px; padding:8px 16px; cursor:pointer; background:var(--bg); color:var(--ink-soft); }
   .bulk-download .dl-btn:hover{ border-color:var(--line-strong); color:var(--ink); }
+  .bulk-download .dl-btn + .dl-btn{ margin-left:8px; }
+  .bulk-download .dl-btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .bulk-download .dl-btn.primary:hover{ background:var(--accent-dark); border-color:var(--accent-dark); }
 
   .visually-hidden{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
   .how{ padding:48px 0 40px; }
@@ -342,18 +356,24 @@
         <textarea id="formula-input" placeholder="=VLOOKUP(A2,Sheet2!A:B,2,FALSE)"></textarea>
         <div class="cell-handle"></div>
       </div>
-      <div class="bulk-tools" id="bulk-tools">
-        <label class="upload-btn" for="bulk-file-input">Upload .csv or .xlsx</label>
-        <input type="file" id="bulk-file-input" accept=".csv,.xlsx">
-        <span class="file-name" id="file-name"></span>
-      </div>
       <div class="paywall-prompt" id="paywall-prompt">
         <div class="paywall-inner">
           <p>Bulk analysis needs FormulaFixer Pro ($2.99/mo).</p>
           <button id="paywall-btn">Sign in to subscribe</button>
         </div>
       </div>
+      <div class="success-banner" id="success-banner">
+        <div class="success-inner">
+          <span class="check">✓</span>
+          <p>Success! Your Pro features should work immediately — refresh the page if you don't see them yet.</p>
+        </div>
+      </div>
       <div class="run-row">
+        <div class="bulk-tools" id="bulk-tools">
+          <label class="upload-btn" for="bulk-file-input">Upload .csv or .xlsx</label>
+          <input type="file" id="bulk-file-input" accept=".csv,.xlsx">
+          <span class="file-name" id="file-name"></span>
+        </div>
         <span class="kbd-hint">⌘+Enter / Ctrl+Enter</span>
         <button id="run-btn">Explain formula</button>
       </div>
@@ -547,11 +567,21 @@
   // again because hasActiveSub hasn't updated yet.
   if (new URLSearchParams(window.location.search).get('subscribed') === 'true') {
     window.history.replaceState({}, '', window.location.pathname);
+    // Stripe already confirmed the payment by the time the user lands back here,
+    // so show success right away rather than waiting on the webhook. Keep polling
+    // in the background so the paywall/bulk UI updates for real once the DB catches up.
+    paywallPrompt.classList.remove('active');
+    successBanner.classList.add('active');
     let attempts = 0;
     const poll = setInterval(async () => {
       attempts++;
       await refreshAuthState();
-      if (hasActiveSub || attempts >= 6) clearInterval(poll);
+      if (hasActiveSub) {
+        clearInterval(poll);
+        if (currentMode === 'bulk') setMode('bulk'); // re-run so bulk-tools swap in instead of the paywall
+      } else if (attempts >= 8) {
+        clearInterval(poll);
+      }
     }, 1500);
   }
 
@@ -712,6 +742,41 @@
     const a = document.createElement('a'); a.href = url; a.download = 'formulafixer-bulk-results.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
   }
 
+  // Writes the AI's corrected formulas back into the original uploaded workbook
+  // (same cells, same everything else — formatting, other sheets, values) so the
+  // person gets back their actual file, fixed, instead of just a flat results list.
+  function applyFixesToWorkbook(items){
+    if (!bulkWorkbook) return { changed: 0 };
+    const sheet = bulkWorkbook.Sheets[bulkWorkbook.SheetNames[0]];
+    const originalByCell = {};
+    (bulkFileData || []).forEach(i => { if (i.cell) originalByCell[i.cell] = i.formula; });
+    let changed = 0;
+    items.forEach(item => {
+      if (!item.cell || !item.formula) return;
+      const cellObj = sheet[item.cell];
+      if (!cellObj) return;
+      const original = originalByCell[item.cell];
+      if (original && original !== item.formula) {
+        changed++;
+        cellObj.f = item.formula.startsWith('=') ? item.formula.slice(1) : item.formula;
+        delete cellObj.v; // stale cached value — force Excel to recompute on open
+      }
+    });
+    if (changed > 0) {
+      bulkWorkbook.Workbook = bulkWorkbook.Workbook || {};
+      bulkWorkbook.Workbook.CalcPr = { fullCalcOnLoad: true };
+    }
+    return { changed };
+  }
+
+  function downloadFixedWorkbook(){
+    if (!bulkWorkbook) return;
+    const out = XLSX.write(bulkWorkbook, { type:'array', bookType:'xlsx', cellStyles:true });
+    const blob = new Blob([out], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = (bulkOrigName || 'formulafixer') + '-fixed.xlsx'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
+
   // ─── TOOL LOGIC ───────────────────────────────────────────────
   const tabs = document.querySelectorAll('.tab');
   const input = document.getElementById('formula-input');
@@ -724,6 +789,7 @@
   const exampleChips = document.getElementById('example-chips');
   const paywallPrompt = document.getElementById('paywall-prompt');
   const paywallBtn = document.getElementById('paywall-btn');
+  const successBanner = document.getElementById('success-banner');
 
   const modeConfig = {
     explain: { placeholder: '=VLOOKUP(A2,Sheet2!A:B,2,FALSE)', button: 'Explain formula', label: 'Explanation', bulk: false },
@@ -734,6 +800,8 @@
 
   let currentMode = 'explain';
   let bulkFileData = null;
+  let bulkWorkbook = null;   // the parsed .xlsx workbook, kept so we can patch fixes back in and re-download
+  let bulkOrigName = null;   // original uploaded filename, for naming the fixed download
 
   function setMode(mode){
     if (mode === 'bulk' && !hasActiveSub) {
@@ -773,7 +841,7 @@
       input.classList.remove('bulk-mode'); bulkTools.classList.remove('active');
       exampleChips.style.display = '';
       document.querySelector('.examples-label').style.display = '';
-      bulkFileData = null; fileName.textContent = ''; bulkFileInput.value = '';
+      bulkFileData = null; fileName.textContent = ''; bulkFileInput.value = ''; bulkWorkbook = null; bulkOrigName = null;
     }
   }
 
@@ -794,6 +862,16 @@
 
   function showLoading(){ resultPanel.style.display='block'; resultCard.innerHTML='<p class="inline-status">Working<span class="blink">▏</span></p>'; }
   function showError(msg){ resultPanel.style.display='block'; resultCard.innerHTML='<p class="error-line">'+escapeHtml(msg||'That formula couldn\'t be processed.')+'</p>'; }
+  function showBulkProgress(done, total){
+    resultPanel.style.display='block';
+    const pct = Math.round((done/total)*100);
+    resultCard.innerHTML = `<p class="inline-status">Processing batch ${done} of ${total}…</p><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+  }
+
+  // Spreadsheet formulas always start with '='. This filters out non-formula
+  // lines (e.g. plain data rows from a CSV export, which can never contain
+  // real formulas since CSV only stores calculated values, not the formula itself).
+  function looksLikeFormula(str){ return /^=/.test(String(str||'').trim()); }
 
   function showResult(mode, data){
     resultPanel.style.display='block'; const label=modeConfig[mode].label; let ft,html;
@@ -803,12 +881,23 @@
     resultPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
   }
 
-  function showBulkResults(items){
+  function showBulkResults(items, skipped, partial, fixResult){
     lastBulkItems=items; resultPanel.style.display='block';
-    let html=`<p class="result-label">Bulk analysis (${items.length} formulas)</p><table class="bulk-table"><thead><tr><th>Cell</th><th>Formula</th><th>Explanation</th><th>Flag</th></tr></thead><tbody>`;
+    let notice = '';
+    if (partial) notice += `<p class="error-line" style="margin:0 0 10px;">Stopped early after a batch failed — showing the ${items.length} formulas that finished. Try again to process the rest.</p>`;
+    if (skipped) notice += `<p class="inline-status" style="margin:0 0 10px;">Skipped ${skipped} line${skipped===1?'':'s'} that didn't look like a formula (must start with "=").</p>`;
+    if (fixResult && fixResult.changed) notice += `<p class="inline-status" style="margin:0 0 10px;">Fixed ${fixResult.changed} formula${fixResult.changed===1?'':'s'} — download the corrected file below.</p>`;
+    let html=notice+`<p class="result-label">Bulk analysis (${items.length} formulas)</p><table class="bulk-table"><thead><tr><th>Cell</th><th>Formula</th><th>Explanation</th><th>Flag</th></tr></thead><tbody>`;
     items.forEach(item=>{ const flagged=item.issue&&item.issue.trim()!==''; html+=`<tr${flagged?' class="flagged"':''}><td class="cell">${escapeHtml(item.cell||'')}</td><td class="formula">${highlightFormula(item.formula||'')}</td><td class="explanation">${escapeHtml(item.explanation||'')}</td><td class="flag">${escapeHtml(item.issue||'')}</td></tr>`; });
-    html+='</tbody></table><div class="bulk-download"><button class="dl-btn" id="dl-csv-btn">Download CSV</button></div>';
-    resultCard.innerHTML=html; document.getElementById('dl-csv-btn').addEventListener('click',downloadBulkCsv);
+    html+='</tbody></table><div class="bulk-download"><button class="dl-btn" id="dl-csv-btn">Download CSV</button>';
+    if (bulkWorkbook) {
+      const label = fixResult && fixResult.changed ? `Download fixed .xlsx (${fixResult.changed} fixed)` : 'Download .xlsx';
+      html += `<button class="dl-btn primary" id="dl-xlsx-btn">${label}</button>`;
+    }
+    html += '</div>';
+    resultCard.innerHTML=html;
+    document.getElementById('dl-csv-btn').addEventListener('click',downloadBulkCsv);
+    const xlsxBtn = document.getElementById('dl-xlsx-btn'); if (xlsxBtn) xlsxBtn.addEventListener('click', downloadFixedWorkbook);
     resultPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
   }
 
@@ -838,30 +927,59 @@
     if (bulkFileData) { items = bulkFileData; }
     else { const lines = input.value.split('\n').filter(l => l.trim()); for (const line of lines) { const t = line.trim(); const m = t.match(/^([A-Z]+\d+):\s*(.+)/); items.push(m ? { cell:m[1], formula:m[2] } : { cell:'', formula:t }); } }
     if (!items.length) { input.focus(); return; }
-    if (items.length > 50) { showError('Up to 50 formulas per batch.'); return; }
-    runBtn.disabled = true; showLoading();
+
+    const validItems = items.filter(i => looksLikeFormula(i.formula));
+    if (!validItems.length) {
+      showError("No formulas found — CSV files can't store formulas (only the calculated values), so a data export won't have any. Try an .xlsx file with live formulas, or paste formulas directly, each starting with \"=\".");
+      return;
+    }
+    const skipped = items.length - validItems.length;
+
+    runBtn.disabled = true;
+    const CHUNK_SIZE = 50;
+    const chunks = [];
+    for (let i = 0; i < validItems.length; i += CHUNK_SIZE) chunks.push(validItems.slice(i, i + CHUNK_SIZE));
+
+    if (chunks.length === 1) showLoading(); else showBulkProgress(0, chunks.length);
+
+    const allResults = [];
     try {
       const headers = await getAuthHeaders();
-      const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 20000);
-      const response = await fetch("/api/formula", { method:"POST", headers, body:JSON.stringify({ mode:"bulk", items }), signal:controller.signal });
-      clearTimeout(timeoutId);
-      if (response.status === 402) { showError('Subscription required for bulk analysis.'); return; }
-      if (!response.ok) throw new Error('bad response');
-      const data = await response.json();
-      if (data.items && Array.isArray(data.items)) showBulkResults(data.items); else showError();
-    } catch (err) { showError(err.name === 'AbortError' ? 'That\'s taking too long. Try again in a moment.' : null); }
-    finally { runBtn.disabled = false; }
+      for (let i = 0; i < chunks.length; i++) {
+        const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const response = await fetch("/api/formula", { method:"POST", headers, body:JSON.stringify({ mode:"bulk", items: chunks[i] }), signal:controller.signal });
+        clearTimeout(timeoutId);
+        if (response.status === 402) { showError('Subscription required for bulk analysis.'); return; }
+        if (!response.ok) throw new Error('bad response');
+        const data = await response.json();
+        if (data.items && Array.isArray(data.items)) allResults.push(...data.items); else throw new Error('bad response');
+        if (chunks.length > 1) showBulkProgress(i + 1, chunks.length);
+      }
+      showBulkResults(allResults, skipped, false, bulkWorkbook ? applyFixesToWorkbook(allResults) : null);
+    } catch (err) {
+      if (allResults.length) showBulkResults(allResults, skipped, true, bulkWorkbook ? applyFixesToWorkbook(allResults) : null);
+      else showError(err.name === 'AbortError' ? 'That\'s taking too long. Try again in a moment.' : null);
+    } finally { runBtn.disabled = false; }
   }
 
   bulkFileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0]; if (!file) return;
     fileName.textContent = file.name; const ext = file.name.split('.').pop().toLowerCase();
     const cellRefPattern = /^[A-Z]+[0-9]+$/;
+    bulkWorkbook = null; bulkOrigName = null;
     if (ext === 'csv') { const text = await file.text(); const lines = text.split('\n').filter(l => l.trim()); bulkFileData = lines.map(line => { const ci = line.indexOf(','); const ff = ci === -1 ? line.trim() : line.slice(0, ci).trim(); if (ci !== -1 && cellRefPattern.test(ff)) return { cell:ff, formula:line.slice(ci+1).trim() }; return { cell:'', formula:line.trim() }; }); }
-    else if (ext === 'xlsx') { const data = await file.arrayBuffer(); const workbook = XLSX.read(data, { type:'array' }); const sheet = workbook.Sheets[workbook.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json(sheet, { header:1 }); bulkFileData = []; for (let r=0; r<rows.length; r++) { const row = rows[r]; if (!row || !row.length) continue; for (let c=0; c<row.length; c++) { const cellObj = sheet[XLSX.utils.encode_cell({ r, c })]; if (cellObj && cellObj.f) bulkFileData.push({ cell:XLSX.utils.encode_cell({r,c}), formula:cellObj.f }); } } }
+    else if (ext === 'xlsx') {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type:'array', cellStyles:true });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header:1 });
+      bulkFileData = [];
+      for (let r=0; r<rows.length; r++) { const row = rows[r]; if (!row || !row.length) continue; for (let c=0; c<row.length; c++) { const cellObj = sheet[XLSX.utils.encode_cell({ r, c })]; if (cellObj && cellObj.f) { const f = cellObj.f.startsWith('=') ? cellObj.f : '=' + cellObj.f; bulkFileData.push({ cell:XLSX.utils.encode_cell({r,c}), formula:f }); } } }
+      bulkWorkbook = workbook; bulkOrigName = file.name.replace(/\.xlsx$/i, '');
+    }
     if (bulkFileData.length) input.value = bulkFileData.map(i => i.cell ? i.cell+': '+i.formula : i.formula).join('\n');
   });
-  input.addEventListener('input', () => { if (bulkFileData) { bulkFileData = null; fileName.textContent = ''; bulkFileInput.value = ''; } });
+  input.addEventListener('input', () => { if (bulkFileData) { bulkFileData = null; fileName.textContent = ''; bulkFileInput.value = ''; bulkWorkbook = null; bulkOrigName = null; } });
   runBtn.addEventListener('click', runTool);
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runTool(); });
 
