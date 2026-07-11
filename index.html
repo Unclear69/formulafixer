@@ -301,8 +301,8 @@
 <!-- Set these to your actual Supabase values. Both are safe to expose client-side. -->
 <script>
   window.ENV = {
-    SUPABASE_URL: 'https://fdsthdpfnektomjozhte.supabase.co',
-    SUPABASE_ANON_KEY: 'sb_secret_Aejr14Xs2adCF31jtfHXgw_chjgQqfR'
+    SUPABASE_URL: 'https://your-project-id.supabase.co',
+    SUPABASE_ANON_KEY: 'your-anon-key'
   };
 </script>
 
@@ -392,7 +392,7 @@
   </section>
 
   <section class="formula-ref" id="reference">
-    <h2 class="section-heading">Reference</h2>
+    <h2 class="section-heading">Formula Reference</h2>
     <p class="section-subtitle">All Excel and Google Sheets functions, paginated. Hover over a short explanation to see full details.</p>
     <div class="ref-controls">
       <input type="text" id="ref-search" placeholder="Search all formulas...">
@@ -487,12 +487,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
   // ─── SUPABASE INIT ────────────────────────────────────────────
-  const supabase = window.supabase.createClient(window.ENV.SUPABASE_URL, window.ENV.SUPABASE_ANON_KEY);
+  const supabaseClient = window.supabase.createClient(window.ENV.SUPABASE_URL, window.ENV.SUPABASE_ANON_KEY);
   let authUser = null;
   let hasActiveSub = false;
 
   async function refreshAuthState(){
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     authUser = session?.user ?? null;
     if (authUser) {
       const { data: subData } = await supabase
@@ -517,7 +517,7 @@
         <button class="btn-signout" id="btn-signout">Sign out</button>
       `;
       document.getElementById('btn-signout').addEventListener('click', async () => {
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
         window.location.reload();
       });
     } else {
@@ -528,13 +528,13 @@
         </button>
       `;
       document.getElementById('btn-google-signin').addEventListener('click', async () => {
-        await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+        await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
       });
     }
   }
 
   refreshAuthState();
-  supabase.auth.onAuthStateChange(() => { refreshAuthState(); });
+  supabaseClient.auth.onAuthStateChange(() => { refreshAuthState(); });
 
   // Stripe redirects back here right after checkout, but the webhook that
   // actually activates the subscription can land a moment later. Without this,
@@ -734,7 +734,7 @@
       if (authUser) {
         paywallBtn.textContent = 'Subscribe';
         paywallBtn.onclick = async () => {
-          const { data: { session } } = await supabase.auth.getSession();
+          const { data: { session } } = await supabaseClient.auth.getSession();
           if (!session) return;
           const res = await fetch('/api/create-checkout-session', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${session.access_token}` } });
           const d = await res.json();
@@ -743,7 +743,7 @@
         };
       } else {
         paywallBtn.textContent = 'Sign in to subscribe';
-        paywallBtn.onclick = () => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+        paywallBtn.onclick = () => supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
       }
       tabs.forEach(t => t.classList.remove('active'));
       document.querySelector('.tab[data-mode="bulk"]').classList.add('active');
@@ -804,7 +804,7 @@
   }
 
   async function getAuthHeaders(){
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
     if (session?.access_token) return { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' };
     return { 'Content-Type': 'application/json' };
   }
