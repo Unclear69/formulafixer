@@ -40,29 +40,32 @@ export default async function handler(req, res) {
       case 'checkout.session.completed': {
         const session = event.data.object;
         const userId = session.metadata?.supabase_user_id;
-        if (!userId) break;
+        if (!userId) { console.error('checkout.session.completed: missing supabase_user_id in metadata', session.id); break; }
         const customerId = session.customer;
-        await supabase.from('subscriptions').upsert({
+        const { error: upsertError } = await supabase.from('subscriptions').upsert({
           user_id: userId,
           stripe_customer_id: typeof customerId === 'string' ? customerId : '',
           status: 'active',
           current_period_end: null
         }, { onConflict: 'user_id' });
+        if (upsertError) console.error('Supabase upsert failed (checkout.session.completed)', userId, upsertError);
         break;
       }
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const subscription = event.data.object;
         const customerId = typeof subscription.customer === 'string' ? subscription.customer : '';
-        if (!customerId) break;
-        const { data: rows } = await supabase.from('subscriptions').select('user_id').eq('stripe_customer_id', customerId).limit(1);
-        if (!rows || !rows.length) break;
+        if (!customerId) { console.error('subscription update: missing customer id', subscription.id); break; }
+        const { data: rows, error: selectError } = await supabase.from('subscriptions').select('user_id').eq('stripe_customer_id', customerId).limit(1);
+        if (selectError) { console.error('Supabase select failed (subscription update)', customerId, selectError); break; }
+        if (!rows || !rows.length) { console.error('subscription update: no matching row for stripe_customer_id', customerId); break; }
         const userId = rows[0].user_id;
         const status = subscription.status === 'active' ? 'active' : 'inactive';
         const periodEnd = subscription.current_period_end
           ? new Date(subscription.current_period_end * 1000).toISOString()
           : null;
-        await supabase.from('subscriptions').update({ status, current_period_end: periodEnd }).eq('user_id', userId);
+        const { error: updateError } = await supabase.from('subscriptions').update({ status, current_period_end: periodEnd }).eq('user_id', userId);
+        if (updateError) console.error('Supabase update failed (subscription update)', userId, updateError);
         break;
       }
     }
