@@ -495,7 +495,7 @@
     const { data: { session } } = await supabaseClient.auth.getSession();
     authUser = session?.user ?? null;
     if (authUser) {
-      const { data: subData } = await supabase
+      const { data: subData } = await supabaseClient
         .from('subscriptions').select('status').eq('user_id', authUser.id).maybeSingle();
       hasActiveSub = (subData && subData.status === 'active');
     } else {
@@ -508,11 +508,12 @@
     const area = document.getElementById('auth-area');
     if (authUser) {
       const avatar = authUser.user_metadata?.avatar_url || '';
-      const name = authUser.user_metadata?.full_name || authUser.email;
+      const fullName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || '';
+      const firstName = fullName ? fullName.trim().split(' ')[0] : (authUser.email || '').split('@')[0];
       area.innerHTML = `
         <span class="user-info">
           ${avatar ? `<img src="${escapeHtml(avatar)}" alt="">` : ''}
-          <span>${escapeHtml(name)}</span>
+          <span>Welcome, ${escapeHtml(firstName)}</span>
         </span>
         <button class="btn-signout" id="btn-signout">Sign out</button>
       `;
