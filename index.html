@@ -301,8 +301,8 @@
 <!-- Set these to your actual Supabase values. Both are safe to expose client-side. -->
 <script>
   window.ENV = {
-    SUPABASE_URL: 'https://your-project-id.supabase.co',
-    SUPABASE_ANON_KEY: 'your-anon-key'
+    SUPABASE_URL: 'https://fdsthdpfnektomjozhte.supabase.co',
+    SUPABASE_ANON_KEY: 'sb_publishable_-Xrtem5azepZUYWI7bwcZg_RBDbye5L'
   };
 </script>
 
@@ -392,7 +392,7 @@
   </section>
 
   <section class="formula-ref" id="reference">
-    <h2 class="section-heading">Formula Reference</h2>
+    <h2 class="section-heading">Reference</h2>
     <p class="section-subtitle">All Excel and Google Sheets functions, paginated. Hover over a short explanation to see full details.</p>
     <div class="ref-controls">
       <input type="text" id="ref-search" placeholder="Search all formulas...">
@@ -683,13 +683,8 @@
     document.querySelectorAll('#ref-pagination .page-btn:not(.disabled)').forEach(btn => { btn.addEventListener('click', () => { currentPage = parseInt(btn.dataset.page); renderFormulaRef(document.getElementById('ref-search').value, document.getElementById('ref-category').value, currentSortDir); }); });
     const container = document.getElementById('ref-list');
     container.innerHTML = pageItems.map(f => {
-      const truncated = f.explanation.length > 80; const short = truncated ? f.explanation.slice(0,80) : f.explanation;
-      return `<div class="ref-row"><div class="ref-formula">${escapeHtml(f.formula)}</div><div class="ref-info"><div class="ref-explain${truncated?' truncated':''}"><span class="short-text">${escapeHtml(short)}</span>${truncated?`<div class="ref-tooltip">${escapeHtml(f.explanation)}</div>`:''}</div><div class="ref-meta"><span class="ref-category">${escapeHtml(f.category)}</span><span>Introduced ${f.date}</span></div></div></div>`;
+      return `<div class="ref-row"><div class="ref-formula">${escapeHtml(f.formula)}</div><div class="ref-info"><div class="ref-explain"><span class="short-text">${escapeHtml(f.explanation)}</span></div><div class="ref-meta"><span class="ref-category">${escapeHtml(f.category)}</span><span>Introduced ${f.date}</span></div></div></div>`;
     }).join('');
-    container.querySelectorAll('.ref-explain.truncated').forEach(el => {
-      el.addEventListener('mouseenter', () => { const t = el.querySelector('.ref-tooltip'); if(!t) return; const r = el.getBoundingClientRect(); t.style.left = r.left+'px'; t.style.top = (r.top - t.offsetHeight - 10)+'px'; t.style.display = 'block'; });
-      el.addEventListener('mouseleave', () => { const t = el.querySelector('.ref-tooltip'); if(t) t.style.display = 'none'; });
-    });
   }
 
   function escapeCsvField(field) {
