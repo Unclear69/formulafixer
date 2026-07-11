@@ -456,7 +456,7 @@
         <ul>
           <li>Everything in Free</li>
           <li>Bulk sheet analysis</li>
-          <li>Review up to 50 formulas at once</li>
+          <li>Review up to 500 formulas per upload</li>
         </ul>
       </div>
     </div>
@@ -466,9 +466,9 @@
   <section class="teaser">
     <h2>Audit every formula in your workbook — in one pass</h2>
     <p>Spreadsheets accumulate technical debt. A workbook built three years ago by a colleague who's since left the company, with tabs feeding into tabs and no documentation. Before you trust the numbers, you need to know what every formula actually does.</p>
-    <p>Bulk mode accepts up to 50 formulas — paste them directly or upload an .xlsx file — and returns a complete audit. Each formula gets a plain-language explanation, structural anomalies are flagged against neighboring cells in the same column, and results can be downloaded as a CSV for documentation or compliance.</p>
+    <p>Bulk mode accepts up to 500 formulas — paste them directly or upload an .xlsx file — and returns a complete audit, processed automatically in batches. Each formula gets a plain-language explanation, structural anomalies are flagged against neighboring cells in the same column, and results can be downloaded as a CSV for documentation or compliance.</p>
     <div class="features">
-      <div class="feat">Paste up to 50 formulas or upload an entire .xlsx file</div>
+      <div class="feat">Paste up to 500 formulas or upload an entire .xlsx file</div>
       <div class="feat">Column-level pattern detection catches copy-paste errors</div>
       <div class="feat">Every formula explained in plain language</div>
       <div class="feat">Download results as a CSV for your records</div>
@@ -731,6 +731,27 @@
     });
   }
 
+  // Quote-aware CSV field splitter (handles commas and doubled "" inside quoted
+  // fields). Needed because our own bulk-results export quotes any field
+  // containing a comma — e.g. a flagged row's Explanation column — and a naive
+  // split(',') would glue that trailing text onto the Formula field on re-upload.
+  function parseCsvLine(line) {
+    const fields = []; let cur = ''; let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else { inQuotes = false; } }
+        else { cur += ch; }
+      } else {
+        if (ch === '"') { inQuotes = true; }
+        else if (ch === ',') { fields.push(cur); cur = ''; }
+        else { cur += ch; }
+      }
+    }
+    fields.push(cur);
+    return fields;
+  }
+
   function escapeCsvField(field) {
     const s = String(field || ''); if (s.includes(',') || s.includes('"') || s.includes('\n')) { return '"' + s.replace(/"/g, '""') + '"'; } return s;
   }
@@ -862,10 +883,11 @@
 
   function showLoading(){ resultPanel.style.display='block'; resultCard.innerHTML='<p class="inline-status">Working<span class="blink">▏</span></p>'; }
   function showError(msg){ resultPanel.style.display='block'; resultCard.innerHTML='<p class="error-line">'+escapeHtml(msg||'That formula couldn\'t be processed.')+'</p>'; }
-  function showBulkProgress(done, total){
+  function showBulkProgress(done, total, warnLarge){
     resultPanel.style.display='block';
     const pct = Math.round((done/total)*100);
-    resultCard.innerHTML = `<p class="inline-status">Processing batch ${done} of ${total}…</p><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+    const warn = warnLarge ? `<p class="inline-status" style="margin:0 0 8px;">Large batch — running in ${total} batches. Splitting very large sheets into smaller files will get you results faster.</p>` : '';
+    resultCard.innerHTML = `${warn}<p class="inline-status">Processing batch ${done} of ${total}…</p><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>`;
   }
 
   // Spreadsheet formulas always start with '='. This filters out non-formula
@@ -935,12 +957,26 @@
     }
     const skipped = items.length - validItems.length;
 
+    // No per-formula count limit is enforced by the pricing plan, but a single
+    // run still has to make a lot of sequential AI calls (one per 50 formulas)
+    // and each of those calls costs real money and time. HARD_CAP protects
+    // against pathological uploads (e.g. an entire multi-thousand-row workbook
+    // dumped in at once); SOFT_WARN just lets the person know a big run is
+    // about to kick off so a slow result isn't a surprise.
+    const HARD_CAP = 500;
+    const SOFT_WARN = 150;
+    if (validItems.length > HARD_CAP) {
+      showError(`This upload has ${validItems.length} formulas — that's too many for one run. Split it into smaller files (under ${HARD_CAP} formulas each, e.g. by sheet or by section) and run each separately.`);
+      return;
+    }
+    const warnLarge = validItems.length > SOFT_WARN;
+
     runBtn.disabled = true;
     const CHUNK_SIZE = 50;
     const chunks = [];
     for (let i = 0; i < validItems.length; i += CHUNK_SIZE) chunks.push(validItems.slice(i, i + CHUNK_SIZE));
 
-    if (chunks.length === 1) showLoading(); else showBulkProgress(0, chunks.length);
+    if (chunks.length === 1) showLoading(); else showBulkProgress(0, chunks.length, warnLarge);
 
     const allResults = [];
     try {
@@ -950,10 +986,11 @@
         const response = await fetch("/api/formula", { method:"POST", headers, body:JSON.stringify({ mode:"bulk", items: chunks[i] }), signal:controller.signal });
         clearTimeout(timeoutId);
         if (response.status === 402) { showError('Subscription required for bulk analysis.'); return; }
+        if (response.status === 502) { const d = await response.json().catch(() => ({})); showError(d.error || 'That batch was too large to process — try again with fewer formulas.'); if (allResults.length) showBulkResults(allResults, skipped, true, bulkWorkbook ? applyFixesToWorkbook(allResults) : null); return; }
         if (!response.ok) throw new Error('bad response');
         const data = await response.json();
         if (data.items && Array.isArray(data.items)) allResults.push(...data.items); else throw new Error('bad response');
-        if (chunks.length > 1) showBulkProgress(i + 1, chunks.length);
+        if (chunks.length > 1) showBulkProgress(i + 1, chunks.length, warnLarge);
       }
       showBulkResults(allResults, skipped, false, bulkWorkbook ? applyFixesToWorkbook(allResults) : null);
     } catch (err) {
@@ -964,19 +1001,50 @@
 
   bulkFileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0]; if (!file) return;
-    fileName.textContent = file.name; const ext = file.name.split('.').pop().toLowerCase();
+    const ext = file.name.split('.').pop().toLowerCase();
     const cellRefPattern = /^[A-Z]+[0-9]+$/;
     bulkWorkbook = null; bulkOrigName = null;
-    if (ext === 'csv') { const text = await file.text(); const lines = text.split('\n').filter(l => l.trim()); bulkFileData = lines.map(line => { const ci = line.indexOf(','); const ff = ci === -1 ? line.trim() : line.slice(0, ci).trim(); if (ci !== -1 && cellRefPattern.test(ff)) return { cell:ff, formula:line.slice(ci+1).trim() }; return { cell:'', formula:line.trim() }; }); }
+    let note = '';
+    if (ext === 'csv') {
+      const text = await file.text();
+      const lines = text.split('\n').filter(l => l.trim());
+      // Detect our own bulk-results export by its header row, so re-uploading a
+      // downloaded CSV doesn't concatenate the Explanation/Flag columns into
+      // the Formula field the way a naive first-comma split would.
+      const isOwnExport = lines.length > 0 &&
+        parseCsvLine(lines[0]).map(f => f.trim().toLowerCase()).join(',') === 'cell,formula,explanation,flag';
+      const dataLines = isOwnExport ? lines.slice(1) : lines;
+      bulkFileData = dataLines.map(line => {
+        if (isOwnExport) {
+          const fields = parseCsvLine(line).map(f => f.trim());
+          return { cell: fields[0] || '', formula: fields[1] || '' };
+        }
+        // Legacy heuristic for plain "cell,formula" files where the formula may
+        // contain unquoted commas (e.g. =SUM(A1,B1)): treat the first field as
+        // the cell if it looks like one, everything after the first comma as
+        // the formula.
+        const ci = line.indexOf(',');
+        const ff = ci === -1 ? line.trim() : line.slice(0, ci).trim();
+        if (ci !== -1 && cellRefPattern.test(ff)) return { cell: ff, formula: line.slice(ci + 1).trim() };
+        return { cell: '', formula: line.trim() };
+      });
+      if (isOwnExport) note = ' (re-importing a previous results file)';
+    }
     else if (ext === 'xlsx') {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data, { type:'array', cellStyles:true });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const sheetNames = workbook.SheetNames;
+      const sheet = workbook.Sheets[sheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, { header:1 });
       bulkFileData = [];
       for (let r=0; r<rows.length; r++) { const row = rows[r]; if (!row || !row.length) continue; for (let c=0; c<row.length; c++) { const cellObj = sheet[XLSX.utils.encode_cell({ r, c })]; if (cellObj && cellObj.f) { const f = cellObj.f.startsWith('=') ? cellObj.f : '=' + cellObj.f; bulkFileData.push({ cell:XLSX.utils.encode_cell({r,c}), formula:f }); } } }
       bulkWorkbook = workbook; bulkOrigName = file.name.replace(/\.xlsx$/i, '');
+      // Only the first sheet is scanned for formulas. Workbooks with other tabs
+      // (summary sheets, helper sheets, etc.) would otherwise be silently
+      // under-analyzed with no indication anything was skipped.
+      if (sheetNames.length > 1) note = ` — only "${sheetNames[0]}" (sheet 1 of ${sheetNames.length}) is analyzed; re-upload after switching tabs to check another`;
     }
+    fileName.textContent = file.name + note;
     if (bulkFileData.length) input.value = bulkFileData.map(i => i.cell ? i.cell+': '+i.formula : i.formula).join('\n');
   });
   input.addEventListener('input', () => { if (bulkFileData) { bulkFileData = null; fileName.textContent = ''; bulkFileInput.value = ''; bulkWorkbook = null; bulkOrigName = null; } });
