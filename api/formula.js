@@ -68,10 +68,11 @@ Rules, no exceptions:
 - If input is unclear or malformed, still return the JSON schema requested with your best-effort guess, never an apology.
 
 In bulk mode, you receive an array of {cell, formula} objects. Return a JSON array of {cell, formula, explanation, issue} objects, one per input, in the same order.
-- "issue" must be null unless you detect an anomaly.
-- "formula" contains the original or a suggested improved version.
+- "issue" must be null unless you detect a broken formula (syntax error, wrong function name, mismatched parens, etc.) or a column-pattern anomaly (see below).
+- If "issue" is non-null, "formula" MUST contain your corrected, working replacement formula — never the broken original. Describe what was wrong/changed in "issue", in the same short plain style as explanations.
+- If "issue" is null (formula is fine), "formula" is simply the original, unchanged.
 
-ANOMALY DETECTION (bulk only): When 3+ formulas share the same column letter, compare their structures. If one formula's pattern deviates from the majority, flag it with "issue": "Doesn't match the pattern of nearby formulas in this column."`;
+ANOMALY DETECTION (bulk only): When 3+ formulas share the same column letter, compare their structures. If one formula's pattern deviates from the majority, flag it with "issue" describing the mismatch (e.g. "Sums an extra column compared to nearby formulas — likely should be =SUM(I40:I41)."), and set "formula" to the corrected version that matches the column's pattern.`;
 
 function buildUserPrompt(mode, value) {
   if (mode === "explain") return `Explain this formula in plain language. Return JSON: {"explanation": "..."}\nFormula: ${value}`;
@@ -81,9 +82,13 @@ function buildUserPrompt(mode, value) {
 }
 
 function buildBulkPrompt(items) {
-  return `Analyze these formulas. Return a JSON array, one object per input: {"cell": "...", "formula": "=...", "explanation": "...", "issue": null} or {"cell": "...", "formula": "=...", "explanation": "...", "issue": "anomaly description"}.
+  return `Analyze these formulas. Return a JSON array, one object per input: {"cell": "...", "formula": "=...", "explanation": "...", "issue": null} or {"cell": "...", "formula": "=...corrected...", "explanation": "...", "issue": "what was wrong and fixed"}.
 
-Before responding, check column-level pattern anomalies: group by column letter. If 3+ formulas share a column, look for structural outliers and flag them.
+Check for two kinds of problems:
+1. Broken formulas — syntax errors, misspelled function names, mismatched parens/args. Fix them.
+2. Column-pattern anomalies — group by column letter; if 3+ formulas share a column, flag any whose structure deviates from the majority, and correct it to match the pattern.
+
+Whenever "issue" is non-null, "formula" must be the corrected, working replacement — never the broken/anomalous original.
 
 Formulas:\n${JSON.stringify(items)}`;
 }
