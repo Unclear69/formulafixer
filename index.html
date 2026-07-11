@@ -85,8 +85,8 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:12px 24px; max-width:100%;
   }
-  .logo{ display:flex; align-items:center; justify-content:center; background:#fff; border-radius:24px; padding:6px 10px; text-decoration:none; }
-  .logo img{ width:20px; height:20px; }
+  .logo{ display:flex; align-items:center; text-decoration:none; }
+  .logo img{ height:22px; width:auto; }
   nav.site-links{ display:flex; gap:16px; font-size:13px; color:rgba(255,255,255,0.85); flex-wrap:wrap; align-items:center; }
   nav.site-links a{ text-decoration:none; }
   nav.site-links a:hover{ color:#fff; }
@@ -308,7 +308,7 @@
 </script>
 
 <header class="site">
-  <a href="/" class="logo"><img src="/logo.png" alt="FormulaFixer" width="20" height="20"></a>
+  <a href="/" class="logo"><img src="/formulafixer-wordmark-white.png" alt="FormulaFixer"></a>
   <nav class="site-links">
     <a href="#basics">Basics</a>
     <a href="#reference">Reference</a>
@@ -327,6 +327,7 @@
 <div class="wrap">
 
   <section class="hero">
+    <img src="/logo.png" alt="FormulaFixer" style="display:block; margin:0 auto 20px; height:96px; width:auto;">
     <h1 class="headline">Fix, explain, or generate any formula</h1>
     <p class="subhead">Paste a formula. No account needed.</p>
 
@@ -483,6 +484,7 @@
   <a href="#faq">FAQ</a>
   <a href="/guide">Guide</a>
   <a href="mailto:feedback@formulafixer.org?subject=FormulaFixer%20feedback">Feedback</a>
+  <p style="margin:14px 0 0; font-size:12px;">FormulaFixer 2026 © All Rights Reserved</p>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
