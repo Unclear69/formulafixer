@@ -683,8 +683,17 @@
     document.querySelectorAll('#ref-pagination .page-btn:not(.disabled)').forEach(btn => { btn.addEventListener('click', () => { currentPage = parseInt(btn.dataset.page); renderFormulaRef(document.getElementById('ref-search').value, document.getElementById('ref-category').value, currentSortDir); }); });
     const container = document.getElementById('ref-list');
     container.innerHTML = pageItems.map(f => {
-      return `<div class="ref-row"><div class="ref-formula">${escapeHtml(f.formula)}</div><div class="ref-info"><div class="ref-explain"><span class="short-text">${escapeHtml(f.explanation)}</span></div><div class="ref-meta"><span class="ref-category">${escapeHtml(f.category)}</span><span>Introduced ${f.date}</span></div></div></div>`;
+      return `<div class="ref-row"><div class="ref-formula">${escapeHtml(f.formula)}</div><div class="ref-info"><div class="ref-explain"><span class="short-text">${escapeHtml(f.explanation)}</span><div class="ref-tooltip">${escapeHtml(f.explanation)}</div></div><div class="ref-meta"><span class="ref-category">${escapeHtml(f.category)}</span><span>Introduced ${f.date}</span></div></div></div>`;
     }).join('');
+    container.querySelectorAll('.ref-explain').forEach(el => {
+      const textEl = el.querySelector('.short-text');
+      const isOverflowing = textEl.scrollWidth > textEl.clientWidth;
+      if (!isOverflowing) { el.querySelector('.ref-tooltip').remove(); return; }
+      el.classList.add('truncated');
+      const tip = el.querySelector('.ref-tooltip');
+      el.addEventListener('mouseenter', () => { const r = el.getBoundingClientRect(); tip.style.left = r.left+'px'; tip.style.top = (r.top - tip.offsetHeight - 10)+'px'; tip.style.display = 'block'; });
+      el.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    });
   }
 
   function escapeCsvField(field) {
