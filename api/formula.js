@@ -135,7 +135,11 @@ export default async function handler(req, res) {
     if (!items || !Array.isArray(items) || !items.length) { res.status(400).json({ error: "bad request" }); return; }
 
     const capped = items.slice(0, 50);
-    const dynamicTokens = Math.min(3000, Math.max(300, capped.length * 80));
+    // ~150 tokens/item covers cell+formula+explanation+issue for a typical row,
+    // including flagged rows where a full corrected formula gets duplicated into
+    // both "formula" and described in "issue". 8000 is deepseek-chat's expandable
+    // output ceiling (default is 4000) — going higher just returns a 400 from upstream.
+    const dynamicTokens = Math.min(8000, Math.max(400, capped.length * 150));
 
     try {
       const upstream = await fetch("https://api.deepseek.com/chat/completions", {
@@ -145,7 +149,17 @@ export default async function handler(req, res) {
       });
       if (!upstream.ok) { console.error('DeepSeek upstream error (bulk)', { status: upstream.status }); res.status(502).json({ error: "upstream failed" }); return; }
       const data = await upstream.json();
-      const raw = data.choices?.[0]?.message?.content || "[]";
+      const choice = data.choices?.[0];
+      if (choice?.finish_reason === 'length') {
+        // Response got cut off mid-JSON before it could close — parsing this would
+        // either throw or silently return a truncated array. Fail loudly instead,
+        // since the real cause (batch too big for the token budget) isn't obvious
+        // from a generic parse error.
+        console.error('DeepSeek response truncated (bulk)', { itemCount: capped.length, maxTokens: dynamicTokens });
+        res.status(502).json({ error: "That batch was too large to process in one pass — try again with fewer formulas." });
+        return;
+      }
+      const raw = choice?.message?.content || "[]";
       const parsed = extractJsonArray(raw);
       res.status(200).json({ items: parsed });
     } catch (err) { console.error('Handler error (bulk)', err); res.status(500).json({ error: "processing failed" }); }
